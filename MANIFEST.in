@@ -1,0 +1,2 @@
+include versioneer.py
+include obsarray/_version.py
