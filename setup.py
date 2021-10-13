@@ -22,10 +22,10 @@ setup(
     license="None",
     author="Sam Hunt",
     author_email="sam.hunt@npl.co.uk",
-    description="Extension to xarray for handling uncertainty quantified observation data",
+    description="Extension to xarray for handling uncertainty-quantified observation data",
     long_description=read("README.rst"),
     packages=find_packages(exclude=("tests",)),
-    install_requires=[],
+    install_requires=["xarray"],
     extras_require={"dev": ["pre-commit", "tox", "sphinx", "sphinx_rtd_theme"]},
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
