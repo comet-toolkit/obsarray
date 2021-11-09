@@ -25,7 +25,7 @@ setup(
     description="Extension to xarray for handling uncertainty-quantified observation data",
     long_description=read("README.rst"),
     packages=find_packages(exclude=("tests",)),
-    install_requires=["xarray"],
+    install_requires=["numpy", "xarray"],
     extras_require={"dev": ["pre-commit", "tox", "sphinx", "sphinx_rtd_theme"]},
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
