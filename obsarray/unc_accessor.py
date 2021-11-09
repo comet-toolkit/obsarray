@@ -94,7 +94,7 @@ class UncAccessor(object):
                 attrs = unc_def[2]
 
             if "err_corr" not in attrs:
-                attrs["err_corr"] = {}
+                attrs["err_corr"] = []
 
             var_attrs = {
                 "dtype": unc_def[1].dtype,
@@ -105,7 +105,7 @@ class UncAccessor(object):
             size = {d: s for d, s in zip(unc_def[0], unc_def[1].shape)}
 
             var = create_var(unc_var, var_attrs, size)
-            var.values = unc_var[1]
+            var.values = unc_def[1]
 
             self._obj[unc_var] = var
 

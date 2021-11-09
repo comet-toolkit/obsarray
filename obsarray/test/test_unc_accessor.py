@@ -126,7 +126,7 @@ class TestUncAccessor(unittest.TestCase):
         unc_def = (
             ["x", "y", "time"],
             self.ds.precipitation.values,
-            {"err_corr": "err_corr"},
+            {"err_corr": []},
         )
         self.ds.unc._add_unc_var("precipitation", "u_s_precipitation", unc_def)
         self.assertTrue(
@@ -138,7 +138,7 @@ class TestUncAccessor(unittest.TestCase):
             {
                 "dtype": np.float64,
                 "dim": ["x", "y", "time"],
-                "attributes": {"err_corr": "err_corr"},
+                "attributes": {"err_corr": []},
             },
             {"x": 2, "y": 2, "time": 3},
         )
@@ -158,7 +158,7 @@ class TestUncAccessor(unittest.TestCase):
             {
                 "dtype": np.float64,
                 "dim": ["x", "y", "time"],
-                "attributes": {"err_corr": {}},
+                "attributes": {"err_corr": []},
             },
             {"x": 2, "y": 2, "time": 3},
         )
@@ -178,10 +178,12 @@ class TestUncAccessor(unittest.TestCase):
             {
                 "dtype": np.float64,
                 "dim": ["x", "y", "time"],
-                "attributes": {"err_corr": {}},
+                "attributes": {"err_corr": []},
             },
             {"x": 2, "y": 2, "time": 3},
         )
+
+        "u_s_precipitation", self.ds.unc["precipitation"].keys()
 
         self.assertTrue(("u_s_precipitation" in self.ds))
 
@@ -190,6 +192,43 @@ class TestUncAccessor(unittest.TestCase):
     #     u_tot_temperature_test = (self.ds.u_r_temperature ** 2. + self.ds.u_s_temperature ** 2.0) ** 0.5
     #
     #     np.testing.assert_array_equal(u_tot_temperature.values, u_tot_temperature_test.values)
+
+
+class TestErrCorr(unittest.TestCase):
+    def setUp(self):
+        np.random.seed(0)
+        temperature = 15 + 8 * np.random.randn(2, 2, 3)
+        u_r_temperature = temperature * 0.02
+        u_s_temperature = temperature * 0.01
+        precipiation = 15 + 8 * np.random.randn(2, 2, 3)
+        u_r_precipiation = temperature * 0.02
+        lon = [[-99.83, -99.32], [-99.79, -99.23]]
+        lat = [[42.25, 42.21], [42.63, 42.59]]
+        time = pd.date_range("2014-09-06", periods=3)
+        reference_time = pd.Timestamp("2014-09-05")
+
+        self.ds = xr.Dataset(
+            data_vars=dict(
+                temperature=(["x", "y", "time"], temperature),
+                u_r_temperature=(["x", "y", "time"], u_r_temperature),
+                u_s_temperature=(["x", "y", "time"], u_s_temperature),
+                precipitation=(["x", "y", "time"], precipiation),
+                u_r_precipitation=(["x", "y", "time"], u_r_precipiation),
+            ),
+            coords=dict(
+                lon=(["x", "y"], lon),
+                lat=(["x", "y"], lat),
+                time=time,
+                reference_time=reference_time,
+            ),
+            attrs=dict(description="Weather related data."),
+        )
+
+        self.ds.temperature.attrs["unc_comps"] = ["u_r_temperature", "u_s_temperature"]
+        self.ds.precipitation.attrs["unc_comps"] = ["u_r_precipitation"]
+
+    def test_to_dict(self):
+        pass
 
 
 if __name__ == "__main__":
