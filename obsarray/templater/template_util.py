@@ -118,17 +118,20 @@ class TemplateUtil:
             )
 
         # Create variable and add to dataset
-        if dtype == "flag":
-            flag_meanings = attributes.pop("flag_meanings")
-            variable = du.create_flags_variable(
-                dim_sizes,
-                meanings=flag_meanings,
-                dim_names=dim_names,
-                attributes=attributes,
-            )
+        if dtype == str:
+            if dtype == "flag":
+                flag_meanings = attributes.pop("flag_meanings")
+                variable = du.create_flags_variable(
+                    dim_sizes,
+                    meanings=flag_meanings,
+                    dim_names=dim_names,
+                    attributes=attributes,
+                )
+
+            else:
+                raise ValueError("unknown dtype - " + dtype)
 
         else:
-
             if err_corr is None:
                 variable = du.create_variable(
                     dim_sizes, dim_names=dim_names, dtype=dtype, attributes=attributes
