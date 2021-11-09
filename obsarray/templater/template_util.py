@@ -24,8 +24,7 @@ def create_ds(
 
     :returns: template dataset
 
-    For the ``template`` dictionary each key/value pair defines one variable, where the key is the variable name and the
-    value is a dictionary with the following entries:
+    For the ``template`` dictionary each key/value pair defines one variable, where the key is the variable name and the value is a dictionary with the following entries:
 
     * ``"dtype"`` (*np.typecodes*/*str*) - variable data type, either a numpy data type or special value ``"flag"`` for
       flag variable
@@ -50,6 +49,19 @@ def create_ds(
     return ds
 
 
+def create_var(var_name: str, var_attrs: Dict, size: Dict[str, int]) -> xarray.Variable:
+    """
+    Returns template variable
+
+    :param var_name: variable name
+    :param var_attrs: variable definition dictionary (as an entry to a template dictionary)
+    :param size: dictionary of dataset dimensions, entry per dataset dimension with value of size as int
+    :return:
+    """
+
+    return TemplateUtil._create_var(var_name, var_attrs, size)
+
+
 class TemplateUtil:
     """
     Class to create template xarray datasets
@@ -71,67 +83,72 @@ class TemplateUtil:
         :returns: dataset with defined variables
         """
 
+        for var_name in template.keys():
+
+            var = TemplateUtil._create_var(var_name, template[var_name], size)
+
+        ds[var_name] = var
+
+        return ds
+
+    @staticmethod
+    def _create_var(var_name: str, var_attrs: dict, size: Dict[str, int]) -> xarray.Variable:
+
         du = DatasetUtil()
 
-        for variable_name in template.keys():
+        # Check variable definition
+        TemplateUtil._check_variable_definition(var_name, var_attrs)
 
-            variable_attrs = template[variable_name]
+        # Unpack variable attributes
+        dtype = var_attrs["dtype"]
+        dim_names = var_attrs["dim"]
+        attributes = (
+            var_attrs["attributes"] if "attributes" in var_attrs else None
+        )
 
-            # Check variable definition
-            TemplateUtil._check_variable_definition(variable_name, variable_attrs)
+        err_corr = None
+        if attributes is not None:
+            if "err_corr" in attributes:
+                err_corr = attributes.pop("err_corr")
 
-            # Unpack variable attributes
-            dtype = variable_attrs["dtype"]
-            dim_names = variable_attrs["dim"]
-            attributes = (
-                variable_attrs["attributes"] if "attributes" in variable_attrs else None
+        # Determine variable shape from dims
+        try:
+            dim_sizes = TemplateUtil._return_variable_shape(
+                dim_names, size
+            )
+        except KeyError:
+            raise KeyError(
+                "Dim Name Error - Variable "
+                + var_name
+                + " defined with dim not in dim_sizes_dict"
             )
 
-            err_corr = None
-            if attributes is not None:
-                if "err_corr" in attributes:
-                    err_corr = attributes.pop("err_corr")
+        # Create variable and add to dataset
+        if dtype == "flag":
+            flag_meanings = attributes.pop("flag_meanings")
+            variable = du.create_flags_variable(
+                dim_sizes,
+                meanings=flag_meanings,
+                dim_names=dim_names,
+                attributes=attributes,
+            )
 
-            # Determine variable shape from dims
-            try:
-                dim_sizes = TemplateUtil._return_variable_shape(
-                    dim_names, size
-                )
-            except KeyError:
-                raise KeyError(
-                    "Dim Name Error - Variable "
-                    + variable_name
-                    + " defined with dim not in dim_sizes_dict"
-                )
+        else:
 
-            # Create variable and add to dataset
-            if dtype == "flag":
-                flag_meanings = attributes.pop("flag_meanings")
-                variable = du.create_flags_variable(
-                    dim_sizes,
-                    meanings=flag_meanings,
-                    dim_names=dim_names,
-                    attributes=attributes,
+            if err_corr is None:
+                variable = du.create_variable(
+                    dim_sizes, dim_names=dim_names, dtype=dtype, attributes=attributes
                 )
 
             else:
+                variable = du.create_unc_variable(
+                    dim_sizes, dim_names=dim_names, dtype=dtype, attributes=attributes, err_corr=err_corr
+                )
 
-                if err_corr is None:
-                    variable = du.create_variable(
-                        dim_sizes, dim_names=dim_names, dtype=dtype, attributes=attributes
-                    )
+            if "encoding" in var_attrs:
+                du.add_encoding(variable, **var_attrs["encoding"])
 
-                else:
-                    variable = du.create_unc_variable(
-                        dim_sizes, dim_names=dim_names, dtype=dtype, attributes=attributes, err_corr=err_corr
-                    )
-
-                if "encoding" in variable_attrs:
-                    du.add_encoding(variable, **variable_attrs["encoding"])
-
-            ds[variable_name] = variable
-
-        return ds
+        return variable
 
     @staticmethod
     def _check_variable_definition(
