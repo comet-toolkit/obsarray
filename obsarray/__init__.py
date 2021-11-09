@@ -5,7 +5,8 @@ __all__ = []
 
 from ._version import get_versions
 from obsarray import accessor
+from obsarray.templater.template_util import create_ds
+from obsarray.templater.dstemplater import DSTemplater
 
 __version__ = get_versions()["version"]
 del get_versions
-
