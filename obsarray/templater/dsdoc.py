@@ -2,7 +2,7 @@
 dsdoc - module for documenting defined ds formats
 """
 
-from dstemplater import DSBuilder
+from obsarray import DSTemplater
 import os
 import numpy as np
 from obsarray.templater.dataset_util import DatasetUtil
