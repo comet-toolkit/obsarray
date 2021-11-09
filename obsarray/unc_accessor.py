@@ -56,8 +56,11 @@ class UncAccessor(object):
         return self._obj[list(unc_var_names)].data_vars
 
     def _var_unc_var_names(self, obs_var_name):
-        return self._obj[obs_var_name].attrs["unc_comps"] \
-            if "unc_comps" in self._obj[obs_var_name].attrs else []
+        return (
+            self._obj[obs_var_name].attrs["unc_comps"]
+            if "unc_comps" in self._obj[obs_var_name].attrs
+            else []
+        )
 
     def _is_obs_var(self, var_name):
         if self._var_unc_var_names(var_name):
@@ -76,7 +79,7 @@ class UncAccessor(object):
         self,
         obs_var: str,
         unc_var: str,
-        unc_def: Union[xr.DataArray, Tuple[List[str], np.ndarray, Optional[dict]]]
+        unc_def: Union[xr.DataArray, Tuple[List[str], np.ndarray, Optional[dict]]],
     ):
 
         # add uncertainty variable
@@ -96,7 +99,7 @@ class UncAccessor(object):
             var_attrs = {
                 "dtype": unc_def[1].dtype,
                 "dim": unc_def[0],
-                "attributes": attrs
+                "attributes": attrs,
             }
 
             size = {d: s for d, s in zip(unc_def[0], unc_def[1].shape)}
@@ -136,7 +139,11 @@ class VariableUncertainty:
     def __getitem__(self, unc_var: str):
         return self._obj._var_unc_vars(self.var_name)
 
-    def __setitem__(self, unc_var: str, unc_def: Union[xr.DataArray, Tuple[List[str], np.ndarray, Optional[dict]]]):
+    def __setitem__(
+        self,
+        unc_var: str,
+        unc_def: Union[xr.DataArray, Tuple[List[str], np.ndarray, Optional[dict]]],
+    ):
         self._obj.unc._add_unc_var(self.var_name, unc_var, unc_def)
 
     def __delitem__(self, unc_var):
@@ -147,7 +154,7 @@ class VariableUncertainty:
         return "<{}>:\nVariable Uncertainties: '{}'\n{}".format(
             self.__class__.__name__,
             self.var_name,
-            self._obj.unc._var_unc_vars(self.var_name).__repr__()
+            self._obj.unc._var_unc_vars(self.var_name).__repr__(),
         )
 
     def __repr__(self):
@@ -199,6 +206,7 @@ class ErrCorrAccessor(object):
         }
 
         n_dims_err_corr = None
+
 
 if __name__ == "__main__":
     pass

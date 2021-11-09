@@ -179,14 +179,9 @@ class TestDatasetUtil(unittest.TestCase):
                 "dim": "x",
                 "form": "rectangle_absolute",
                 "params": [1, 2],
-                "units": ["m", "m"]
+                "units": ["m", "m"],
             },
-            {
-                "dim": ["y", "z"],
-                "form": "systematic",
-                "params": [],
-                "units": []
-            }
+            {"dim": ["y", "z"], "form": "systematic", "params": [], "units": []},
         ]
 
         unc_variable = DatasetUtil.create_unc_variable(
@@ -194,13 +189,13 @@ class TestDatasetUtil(unittest.TestCase):
             np.int8,
             ["x", "y", "z", "a"],
             pdf_shape="gaussian",
-            err_corr=err_corr
+            err_corr=err_corr,
         )
 
         expected_attrs = {
             "err_corr_1_dim": "x",
             "err_corr_1_form": "rectangle_absolute",
-            "err_corr_1_units": ['m', 'm'],
+            "err_corr_1_units": ["m", "m"],
             "err_corr_1_params": [1, 2],
             "err_corr_2_dim": ["y", "z"],
             "err_corr_2_form": "systematic",
@@ -210,8 +205,8 @@ class TestDatasetUtil(unittest.TestCase):
             "err_corr_3_form": "random",
             "err_corr_3_units": [],
             "err_corr_3_params": [],
-            "pdf_shape": "gaussian"
-         }
+            "pdf_shape": "gaussian",
+        }
 
         self.assertTrue(expected_attrs.items() <= unc_variable.attrs.items())
 
@@ -221,7 +216,7 @@ class TestDatasetUtil(unittest.TestCase):
                 "dim": "x",
                 "form": "rectangle_absolute",
                 "params": [1, 2, 3],
-                "units": ["m", "m", "m"]
+                "units": ["m", "m", "m"],
             }
         ]
 
@@ -232,7 +227,7 @@ class TestDatasetUtil(unittest.TestCase):
             np.int8,
             ["x"],
             pdf_shape="gaussian",
-            err_corr=err_corr
+            err_corr=err_corr,
         )
 
         pass

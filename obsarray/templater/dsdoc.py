@@ -15,7 +15,7 @@ TEXT = {
     "title": "Product Data Format",
     "section_title-introduction": "Introduction",
     "paragraph-introduction": "This document aims to specify definitions, conventions and formats of the various data "
-                              "products generated in the Hypernets land and water network processors.",
+    "products generated in the Hypernets land and water network processors.",
     "section_title-formats": "Product Definitions",
     "paragraph-formats": "Text",
     "section_title-dimensions": "Dimension",

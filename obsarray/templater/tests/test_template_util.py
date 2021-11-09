@@ -70,7 +70,7 @@ class TestTemplateUtil(unittest.TestCase):
                     "long_name": "array_variable_long_name",
                     "units": "units",
                     "preferred_symbol": "av",
-                    "err_corr": "err_corr"
+                    "err_corr": "err_corr",
                 },
                 "encoding": {"dtype": np.uint16, "scale_factor": 1.0, "offset": 0.0},
             }
@@ -90,7 +90,7 @@ class TestTemplateUtil(unittest.TestCase):
                 "units": "units",
                 "preferred_symbol": "av",
             },
-            err_corr="err_corr"
+            err_corr="err_corr",
         )
         mock_du.return_value.add_encoding.assert_called_once_with(
             mock_du.return_value.create_unc_variable.return_value,
@@ -226,9 +226,7 @@ class TestTemplateUtil(unittest.TestCase):
         size = {"dim1": 25, "dim2": 30, "dim3": 10, "dim4": 15}
         dim_names = ["dim2", "dim1"]
 
-        dim_sizes = TemplateUtil._return_variable_shape(
-            dim_names=dim_names, size=size
-        )
+        dim_sizes = TemplateUtil._return_variable_shape(dim_names=dim_names, size=size)
 
         self.assertCountEqual([30, 25], dim_sizes)
 

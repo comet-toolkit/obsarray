@@ -25,7 +25,9 @@ class DSTemplater:
     For ``metadata_defs`` the corresponding entries should be a dictionary of per product metadata.
     """
 
-    def __init__(self, templates: Optional[Dict] = None, metadata_defs: Optional[Dict] = None):
+    def __init__(
+        self, templates: Optional[Dict] = None, metadata_defs: Optional[Dict] = None
+    ):
         self.templates = templates if templates is not None else {}
         self.metadata_defs = metadata_defs if metadata_defs is not None else {}
 
@@ -44,11 +46,18 @@ class DSTemplater:
             template = self.templates[template_name]
         else:
             raise NameError(
-                "No template: " + template_name + " - must be one of " + str(self.return_template_names())
+                "No template: "
+                + template_name
+                + " - must be one of "
+                + str(self.return_template_names())
             )
 
         # Find metadata def
-        metadata = self.metadata_defs[template_name] if template_name in self.metadata_defs.keys() else None
+        metadata = (
+            self.metadata_defs[template_name]
+            if template_name in self.metadata_defs.keys()
+            else None
+        )
 
         return create_ds(template, size, metadata=metadata)
 
@@ -72,7 +81,9 @@ class DSTemplater:
 
         return list(self.templates[template_name].keys())
 
-    def return_ds_format_variable_dict(self, template_name: str, variable_name: str) -> Dict:
+    def return_ds_format_variable_dict(
+        self, template_name: str, variable_name: str
+    ) -> Dict:
         """
         Returns variable definition info for specified template variable
 

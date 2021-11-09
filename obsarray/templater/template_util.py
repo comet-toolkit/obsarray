@@ -11,9 +11,7 @@ __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
 
 
 def create_ds(
-        template: Dict[str, Dict],
-        size: Dict[str, int],
-        metadata: Optional[Dict] = None
+    template: Dict[str, Dict], size: Dict[str, int], metadata: Optional[Dict] = None
 ) -> xarray.Dataset:
     """
     Returns template dataset
@@ -69,9 +67,7 @@ class TemplateUtil:
 
     @staticmethod
     def add_variables(
-            ds: xarray.Dataset,
-            template: Dict[str, Dict],
-            size: Dict[str, int]
+        ds: xarray.Dataset, template: Dict[str, Dict], size: Dict[str, int]
     ) -> xarray.Dataset:
         """
         Adds defined variables dataset
@@ -92,7 +88,9 @@ class TemplateUtil:
         return ds
 
     @staticmethod
-    def _create_var(var_name: str, var_attrs: dict, size: Dict[str, int]) -> xarray.Variable:
+    def _create_var(
+        var_name: str, var_attrs: dict, size: Dict[str, int]
+    ) -> xarray.Variable:
 
         du = DatasetUtil()
 
@@ -102,9 +100,7 @@ class TemplateUtil:
         # Unpack variable attributes
         dtype = var_attrs["dtype"]
         dim_names = var_attrs["dim"]
-        attributes = (
-            var_attrs["attributes"] if "attributes" in var_attrs else None
-        )
+        attributes = var_attrs["attributes"] if "attributes" in var_attrs else None
 
         err_corr = None
         if attributes is not None:
@@ -113,9 +109,7 @@ class TemplateUtil:
 
         # Determine variable shape from dims
         try:
-            dim_sizes = TemplateUtil._return_variable_shape(
-                dim_names, size
-            )
+            dim_sizes = TemplateUtil._return_variable_shape(dim_names, size)
         except KeyError:
             raise KeyError(
                 "Dim Name Error - Variable "
@@ -142,7 +136,11 @@ class TemplateUtil:
 
             else:
                 variable = du.create_unc_variable(
-                    dim_sizes, dim_names=dim_names, dtype=dtype, attributes=attributes, err_corr=err_corr
+                    dim_sizes,
+                    dim_names=dim_names,
+                    dtype=dtype,
+                    attributes=attributes,
+                    err_corr=err_corr,
                 )
 
             if "encoding" in var_attrs:
@@ -151,10 +149,7 @@ class TemplateUtil:
         return variable
 
     @staticmethod
-    def _check_variable_definition(
-            variable_name: str,
-            variable_attrs: Dict
-    ):
+    def _check_variable_definition(variable_name: str, variable_attrs: Dict):
         """
         Checks validity of variable definition, raising errors as appropriate
 
@@ -171,10 +166,7 @@ class TemplateUtil:
         # todo - add more tests to check validity of variable definition
 
     @staticmethod
-    def _return_variable_shape(
-            dim_names: List[str],
-            size: Dict[str, int]
-    ) -> List[int]:
+    def _return_variable_shape(dim_names: List[str], size: Dict[str, int]) -> List[int]:
         """
         Returns dimension sizes of specified dimensions
 
@@ -187,10 +179,7 @@ class TemplateUtil:
         return [size[dim_name] for dim_name in dim_names]
 
     @staticmethod
-    def add_metadata(
-            ds: xarray.Dataset,
-            metadata: Dict
-    ) -> xarray.Dataset:
+    def add_metadata(ds: xarray.Dataset, metadata: Dict) -> xarray.Dataset:
         """
         Adds metadata to dataset
 

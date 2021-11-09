@@ -32,10 +32,10 @@ class DatasetUtil:
 
     @staticmethod
     def create_default_array(
-            dim_sizes: List[int],
-            dtype: numpy.typecodes,
-            dim_names: Optional[List[str]] = None,
-            fill_value: Optional[Union[int, float]] =None
+        dim_sizes: List[int],
+        dtype: numpy.typecodes,
+        dim_names: Optional[List[str]] = None,
+        fill_value: Optional[Union[int, float]] = None,
     ) -> xarray.DataArray:
         """
         Return default empty xarray DataArray
@@ -68,7 +68,7 @@ class DatasetUtil:
         dtype: numpy.typecodes,
         dim_names: Optional[List[str]] = None,
         attributes: Dict = None,
-        fill_value: Optional[Union[int, float]] = None
+        fill_value: Optional[Union[int, float]] = None,
     ) -> xarray.Variable:
         """
         Return default empty xarray Variable
@@ -90,7 +90,9 @@ class DatasetUtil:
         )
 
         if dim_names is None:
-            variable = xarray.Variable(DEFAULT_DIM_NAMES[-len(dim_sizes) :], default_array)
+            variable = xarray.Variable(
+                DEFAULT_DIM_NAMES[-len(dim_sizes) :], default_array
+            )
         else:
             variable = xarray.Variable(dim_names, default_array)
 
@@ -103,12 +105,12 @@ class DatasetUtil:
 
     @staticmethod
     def create_unc_variable(
-            dim_sizes: List[int],
-            dtype: numpy.typecodes,
-            dim_names: List[str],
-            attributes: Optional[Dict] = None,
-            pdf_shape: str = "gaussian",
-            err_corr: Optional[List[Dict[str, Union[str, List]]]] = None,
+        dim_sizes: List[int],
+        dtype: numpy.typecodes,
+        dim_names: List[str],
+        attributes: Optional[Dict] = None,
+        pdf_shape: str = "gaussian",
+        err_corr: Optional[List[Dict[str, Union[str, List]]]] = None,
     ) -> xarray.Variable:
         """
         Return default empty 1d xarray uncertainty Variable
@@ -153,12 +155,14 @@ class DatasetUtil:
         for erd in err_corr:
             defined_err_corr_dims += erd["dim"]
 
-        missing_err_corr_dims = [dim for dim in dim_names if dim not in defined_err_corr_dims]
+        missing_err_corr_dims = [
+            dim for dim in dim_names if dim not in defined_err_corr_dims
+        ]
         for missing_err_corr_dim in missing_err_corr_dims:
             err_corr.append({"dim": missing_err_corr_dim, "form": "random"})
 
         for i, ecdef in enumerate(err_corr):
-            def_str = str(i+1)
+            def_str = str(i + 1)
 
             dim_str = "_".join(["err", "corr", def_str, "dim"])
             form_str = "_".join(["err", "corr", def_str, "form"])
@@ -177,8 +181,13 @@ class DatasetUtil:
                     req_n_params = ERR_CORR_DEFS[form]["n_params"]
                     if n_params != req_n_params:
                         raise ValueError(
-                            "Must define " + str(req_n_params) + " for correlation form"
-                            + form + "(not " + str(n_params) + ")"
+                            "Must define "
+                            + str(req_n_params)
+                            + " for correlation form"
+                            + form
+                            + "(not "
+                            + str(n_params)
+                            + ")"
                         )
 
                 attributes[params_str] = ecdef["params"]
@@ -200,10 +209,10 @@ class DatasetUtil:
 
     @staticmethod
     def create_flags_variable(
-            dim_sizes: List[int],
-            meanings: List[str],
-            dim_names: Optional[List[str]] = None,
-            attributes: Optional[Dict] = None
+        dim_sizes: List[int],
+        meanings: List[str],
+        dim_names: Optional[List[str]] = None,
+        attributes: Optional[Dict] = None,
     ) -> xarray.Variable:
         """
         Return default empty 1d xarray flag Variable
@@ -263,7 +272,7 @@ class DatasetUtil:
         scale_factor: Optional[float] = 1.0,
         offset: Optional[float] = 0.0,
         fill_value: Optional[Union[int, float]] = None,
-        chunksizes: Optional[float] = None
+        chunksizes: Optional[float] = None,
     ):
         """
         Add encoding to xarray Variable to apply when writing netCDF files
