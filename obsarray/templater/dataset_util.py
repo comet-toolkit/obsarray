@@ -153,7 +153,7 @@ class DatasetUtil:
         # set undefined dims as random
         defined_err_corr_dims = []
         for erd in err_corr:
-            defined_err_corr_dims += erd["dim"]
+            defined_err_corr_dims.append(erd["dim"])
 
         missing_err_corr_dims = [
             dim for dim in dim_names if dim not in defined_err_corr_dims
@@ -162,12 +162,12 @@ class DatasetUtil:
             err_corr.append({"dim": missing_err_corr_dim, "form": "random"})
 
         for i, ecdef in enumerate(err_corr):
-            def_str = str(i + 1)
+            idx = str(i + 1)
 
-            dim_str = "_".join(["err", "corr", def_str, "dim"])
-            form_str = "_".join(["err", "corr", def_str, "form"])
-            params_str = "_".join(["err", "corr", def_str, "params"])
-            units_str = "_".join(["err", "corr", def_str, "units"])
+            dim_str = DatasetUtil.return_err_corr_dim_str(idx)
+            form_str = DatasetUtil.return_err_corr_form_str(idx)
+            params_str = DatasetUtil.return_err_corr_params_str(idx)
+            units_str = DatasetUtil.return_err_corr_units_str(idx)
 
             form = ecdef["form"]
             attributes[dim_str] = ecdef["dim"]
@@ -206,6 +206,22 @@ class DatasetUtil:
         )
 
         return variable
+
+    @staticmethod
+    def return_err_corr_dim_str(idx):
+        return "_".join(["err", "corr", idx, "dim"])
+
+    @staticmethod
+    def return_err_corr_form_str(idx):
+        return "_".join(["err", "corr", idx, "form"])
+
+    @staticmethod
+    def return_err_corr_params_str(idx):
+        return "_".join(["err", "corr", idx, "params"])
+
+    @staticmethod
+    def return_err_corr_units_str(idx):
+        return "_".join(["err", "corr", idx, "units"])
 
     @staticmethod
     def create_flags_variable(

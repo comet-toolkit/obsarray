@@ -210,10 +210,6 @@ class TestErrCorr(unittest.TestCase):
         self.ds = xr.Dataset(
             data_vars=dict(
                 temperature=(["x", "y", "time"], temperature),
-                u_r_temperature=(["x", "y", "time"], u_r_temperature),
-                u_s_temperature=(["x", "y", "time"], u_s_temperature),
-                precipitation=(["x", "y", "time"], precipiation),
-                u_r_precipitation=(["x", "y", "time"], u_r_precipiation),
             ),
             coords=dict(
                 lon=(["x", "y"], lon),
@@ -224,10 +220,61 @@ class TestErrCorr(unittest.TestCase):
             attrs=dict(description="Weather related data."),
         )
 
-        self.ds.temperature.attrs["unc_comps"] = ["u_r_temperature", "u_s_temperature"]
-        self.ds.precipitation.attrs["unc_comps"] = ["u_r_precipitation"]
+        self.ds.unc["temperature"]["u_ran_temperature"] = (
+            ["x", "y", "time"],
+            temperature * 0.05,
+        )
+
+        self.ds.unc["temperature"]["u_sys_temperature"] = (
+            ["x", "y", "time"],
+            temperature * 0.03,
+            {
+                "err_corr": [
+                    {
+                        "dim": "x",
+                        "form": "systematic",
+                        "params": [],
+                    },
+                    {
+                        "dim": "y",
+                        "form": "systematic",
+                        "params": [],
+                    },
+                    {
+                        "dim": "time",
+                        "form": "systematic",
+                        "params": [],
+                    },
+                ]
+            },
+        )
+
+        self.ds.unc["temperature"]["u_str_temperature"] = (
+            ["x", "y", "time"],
+            temperature * 0.03,
+            {
+                "err_corr": [
+                    {
+                        "dim": "x",
+                        "form": "custom",
+                        "params": ["err_corr_str_temperature"],
+                    },
+                    {
+                        "dim": "y",
+                        "form": "systematic",
+                        "params": [],
+                    },
+                    {
+                        "dim": "time",
+                        "form": "systematic",
+                        "params": [],
+                    },
+                ]
+            },
+        )
 
     def test_to_dict(self):
+        self.ds.unc.__str__()
         pass
 
 
