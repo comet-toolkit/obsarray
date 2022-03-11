@@ -80,10 +80,9 @@ class TemplateUtil:
         """
 
         for var_name in template.keys():
-
             var = TemplateUtil._create_var(var_name, template[var_name], size)
 
-        ds[var_name] = var
+            ds[var_name] = var
 
         return ds
 
