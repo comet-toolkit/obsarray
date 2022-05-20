@@ -19,7 +19,7 @@ setup(
     cmdclass=versioneer.get_cmdclass(),
     name="obsarray",
     url="http://gitlab.npl.co.uk/eco/eo/obsarray",
-    license="None",
+    license="GPLv3",
     author="Sam Hunt",
     author_email="sam.hunt@npl.co.uk",
     description="Extension to xarray for handling uncertainty-quantified observation data",
