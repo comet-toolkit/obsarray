@@ -1,0 +1,7 @@
+# required modules
+numpy
+xarray
+
+# for docs
+sphinx
+sphinx-book-theme
