@@ -21,7 +21,7 @@ obsarray is free software licensed under the
 
 obsarray has been developed by [Sam Hunt](https://github.com/shunt16).
 
-The development has funded by:
+The development has been funded by:
 
 * The UK's Department for Business, Energy and Industrial Strategy's (BEIS) National Measurement System (NMS) programme
 * The IDEAS-QA4EO project funded by the European Space Agency.
