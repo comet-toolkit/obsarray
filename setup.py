@@ -22,6 +22,7 @@ setup(
     license="GPLv3",
     author="Sam Hunt",
     author_email="sam.hunt@npl.co.uk",
+    download_url="https://github.com/comet-toolkit/obsarray/archive/refs/tags/v0.0.tar.gz",
     description="Measurement uncertainty handling in Python",
     long_description=read("README.md"),
     packages=find_packages(exclude=("tests",)),
