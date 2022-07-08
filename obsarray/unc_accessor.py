@@ -1,119 +1,17 @@
 """unc_accessor - xarray extensions with accessor objects for uncertainty handling"""
 
+from copy import deepcopy
 import numpy as np
 import xarray as xr
 from typing import Union, Tuple, List, Optional
+from comet_maths import convert_corr_to_cov
 from obsarray.templater.template_util import create_var
 from obsarray.templater.dataset_util import DatasetUtil
+from obsarray.err_corr import err_corr_forms, BaseErrCorrForm
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
 __all__ = []
-
-
-class Err:
-    def __init__(self, xarray_obj, unc_var_name):
-        self._obj = xarray_obj
-        self.unc_var_name = unc_var_name
-
-    @property
-    def params(self):
-
-        err_corr_idxs = set(
-            [
-                a[9]
-                for a in self._obj[self.unc_var_name].attrs.keys()
-                if a[:8] == "err_corr"
-            ]
-        )
-
-        err_corr = []
-        for i in err_corr_idxs:
-            err_corr.append(
-                {
-                    "dim": self._obj[self.unc_var_name].attrs[
-                        DatasetUtil.return_err_corr_dim_str(i)
-                    ],
-                    "form": self._obj[self.unc_var_name].attrs[
-                        DatasetUtil.return_err_corr_form_str(i)
-                    ],
-                    "params": self._obj[self.unc_var_name].attrs[
-                        DatasetUtil.return_err_corr_params_str(i)
-                    ],
-                    "units": self._obj[self.unc_var_name].attrs[
-                        DatasetUtil.return_err_corr_units_str(i)
-                    ],
-                }
-            )
-
-        return err_corr
-
-    @property
-    def param_dims(self) -> list:
-        return [p["dim"] for p in self.params]
-
-    def dim_params(self, dim: Union[str, List[str]]) -> list:
-
-        # if dim in self.param_dims:
-        #     raise ValueError("dim must be one of " + str(self.param_dims))
-
-        params = self.params
-
-        if dim is not None:
-            params = [p for p in self.params if p["dim"] == dim][0]
-
-        return params
-
-    def _params_to_err_corr_matrix(self, dim=None):
-        params = self.dim_params(dim)
-
-        len_dims = self._eval_len_dims(dim)
-
-        if params["form"] == "random":
-            return np.eye(len_dims)
-
-        elif params["form"] == "systematic":
-            return np.ones((len_dims, len_dims))
-
-        elif params["form"] == "custom":
-            return self._obj[params["params"][0]]
-
-    def _eval_len_dims(self, dim):
-        if type(dim) == str:
-            dim = [dim]
-
-        len_dims = 0
-        for d in dim:
-            len_dims += len(self._obj[self.unc_var_name][d])
-
-        return len_dims
-
-
-class ErrCorr(Err):
-    def __str__(self):
-        """Custom __str__"""
-
-        params_string = ""
-        for p in self.params:
-            params_string += "* " + p.__repr__()[1:-1] + "\n"
-
-        return "<{} '{}'> \n{}".format(
-            self.__class__.__name__, self.unc_var_name, params_string
-        )
-
-    def __repr__(self):
-        """Custom  __repr__"""
-        return str(self)
-
-    def to_matrix(self, dim):
-        return self._params_to_err_corr_matrix(dim)
-
-
-class ErrCov(Err):
-    pass
-
-    # def to_matrix(self, dim):
-    #     err_corr = self._params_to_err_corr_matrix(dim)
 
 
 class Uncertainty:
@@ -122,11 +20,87 @@ class Uncertainty:
 
     :param xarray_obj: dataset
     :param unc_var_name: name of uncertainty variable
+    :param sli: slice of variable
     """
 
-    def __init__(self, xarray_obj, unc_var_name):
+    def __init__(
+        self, xarray_obj: xr.Dataset, unc_var_name: str, sli: Optional[tuple] = None
+    ):
+
+        # initialise attributes
+
         self._obj = xarray_obj
-        self.unc_var_name = unc_var_name
+        self._unc_var_name = unc_var_name
+        self._sli = sli
+
+        # if no slice provided, define as slice for full array
+        if self._sli is None:
+            self._sli = tuple([slice(None)] * self._obj[self._unc_var_name].ndim)
+
+    @property
+    def err_corr(self) -> List[Tuple[Union[str, List[str]], BaseErrCorrForm]]:
+        """
+        Error-correlation parameterisation for uncertainty effect.
+
+        Given as a list of parameterisations along different variable slice dimensions. Each parameterisation is given as a two-element tuple - where the first element is the dimension (or list of dimensions) along which the parameterisation applies, and the second element is the error-correlation parameterisation defining object (as subclass of ``obsarray.err_corr.BaseErrorCorrForm``).
+
+        :return: Error correlation parameterisation
+        """
+
+        # Find dimensions in variable slice
+        sli_dims = [
+            dim
+            for dim, idx in zip(self._obj.dims.keys(), self._sli)
+            if not isinstance(idx, int)
+        ]
+
+        # Find number of error-correlation parameterisations along different dimensions in variable metadata
+        err_corr_idxs = set(
+            [
+                a[9]
+                for a in self._obj[self._unc_var_name].attrs.keys()
+                if a[:8] == "err_corr"
+            ]
+        )
+
+        # Loop through error-correlation parameterisations, extract metadata and build parameterisation
+        # as a two element tuple (as described in doc string)
+        err_corr = []
+        for i in err_corr_idxs:
+
+            dim_i = self._obj[self._unc_var_name].attrs[
+                DatasetUtil.return_err_corr_dim_str(i)
+            ]
+
+            list_dim_i = deepcopy(dim_i)
+            if isinstance(dim_i, str):
+                list_dim_i = [dim_i]
+
+            # continue if parmeterisation dimension in slice dimensions
+            if [dim_i_j for dim_i_j in list_dim_i if dim_i_j in sli_dims]:
+
+                form_i = self._obj[self._unc_var_name].attrs[
+                    DatasetUtil.return_err_corr_form_str(i)
+                ]
+
+                params_i = self._obj[self._unc_var_name].attrs[
+                    DatasetUtil.return_err_corr_params_str(i)
+                ]
+
+                units_i = self._obj[self._unc_var_name].attrs[
+                    DatasetUtil.return_err_corr_units_str(i)
+                ]
+
+                err_corr.append(
+                    (
+                        dim_i,
+                        err_corr_forms[form_i](
+                            self._obj, self._unc_var_name, params_i, units_i
+                        ),
+                    )
+                )
+
+        return err_corr
 
     def __str__(self):
         """Custom __str__"""
@@ -139,14 +113,26 @@ class Uncertainty:
         """Custom  __repr__"""
         return str(self)
 
+    def __getitem__(self, sli: tuple):
+        """
+        Defines variable slice
+
+        :param sli: slice of variable
+        :return: self
+        """
+
+        # update slice
+        self._sli = sli
+        return self
+
     @property
-    def data(self) -> xr.DataArray:
+    def value(self) -> xr.DataArray:
         """
         Return uncertainty data array
 
         :return: uncertainty variable
         """
-        return self._obj[self.unc_var_name]
+        return self._obj[self._unc_var_name][self._sli]
 
     @property
     def pdf_shape(self):
@@ -155,56 +141,73 @@ class Uncertainty:
 
         :return: uncertainty variable pdf shape
         """
-        return self._obj[self.unc_var_name].attrs["pdf_shape"]
+        return self._obj[self._unc_var_name].attrs["pdf_shape"]
 
     @property
-    def err_corr(self) -> ErrCorr:
-        """
-        Returns error correlation interface object
-
-        :return: error correlation interface
-        """
-        return ErrCorr(self._obj, self.unc_var_name)
-
-    @property
-    def err_cov(self) -> ErrCov:
-        """
-        Returns error covariance interface object
-
-        :return: error covariance interface
-        """
-        return ErrCov(self._obj, self.unc_var_name)
-
-    def _get_err_corr_forms(self):
-        forms = set()
-        for dim_params in self.err_corr.params:
-            forms.add(dim_params["form"])
-
-        return list(forms)
-
-    @property
-    def is_random(self):
+    def is_random(self) -> bool:
         """
         Returns True if uncertainty is fully random in all dimensions
 
-        :return: random uncertainty bool
+        :return: random uncertainty flag
         """
 
-        if self._get_err_corr_forms() == ["random"]:
-            return True
-        return False
+        return all(e[1].is_random is True for e in self.err_corr)
 
     @property
-    def is_systematic(self):
+    def is_structured(self) -> bool:
+        """
+        Returns True if uncertainty is neither fully random or systematic in all dimensions
+
+        :return: structured uncertainty flag
+        """
+
+        if all(e[1].is_random is True for e in self.err_corr) or all(
+            e[1].is_systematic is True for e in self.err_corr
+        ):
+            return False
+
+        return True
+
+    @property
+    def is_systematic(self) -> bool:
         """
         Returns True if uncertainty is fully systematic in all dimensions
 
-        :return: systematic uncertainty bool
+        :return: systematic uncertainty flag
         """
 
-        if self._get_err_corr_forms() == ["systematic"]:
-            return True
-        return False
+        return all(e[1].is_systematic is True for e in self.err_corr)
+
+    @property
+    def err_corr_matrix(self) -> np.ndarray:
+        """
+        Error-correlation matrix for uncertainty effect.
+
+        Caution: matrix built every time this is run (no caching possible).
+
+        :return: Error-correlation matrix
+        """
+
+        # initialise error-correlation matrix
+        err_corr_matrix = np.zeros((self.value.size, self.value.size))
+
+        # populate with error-correlation matrices built be each error-correlation
+        # parameterisation object
+        for dim_err_corr in self.err_corr:
+            err_corr_matrix += dim_err_corr[1].build_matrix(self._sli)
+
+        return err_corr_matrix
+
+    @property
+    def err_cov_matrix(self):
+        """
+        Error-covariance matrix for uncertainty effect
+
+        Caution: matrix built every time this is run (no caching possible).
+
+        :return: Error-covariance matrix
+        """
+        return convert_corr_to_cov(self.err_corr_matrix, self.data.values)
 
 
 class VariableUncertainty:
@@ -217,16 +220,24 @@ class VariableUncertainty:
 
     def __init__(self, xarray_obj: xr.Dataset, var_name: str):
         self._obj = xarray_obj
-        self.var_name = var_name
+        self._var_name = var_name
+        self._sli = tuple([slice(None)] * self._obj[self.var_name].ndim)
 
-    def __getitem__(self, unc_var: str) -> Uncertainty:
+    def __getitem__(
+        self, key: Union[str, tuple]
+    ) -> Union[Uncertainty, "VariableUncertainty"]:
         """
         Returns variable uncertainty interface
 
-        :param unc_var: uncertainty variable name
+        :param key: uncertainty variable name or variable slice
         :return: uncertainty interface
         """
-        return Uncertainty(self._obj, unc_var)
+
+        if isinstance(key, str):
+            return Uncertainty(self._obj, key, self._sli)
+
+        self._sli = key
+        return self
 
     def __setitem__(
         self,
@@ -244,7 +255,7 @@ class VariableUncertainty:
         :return: uncertainty variable interface
         """
 
-        self._obj.unc._add_unc_var(self.var_name, unc_var, unc_def)
+        self._obj.unc._add_unc_var(self._var_name, unc_var, unc_def)
 
     def __delitem__(self, unc_var):
         """
@@ -252,14 +263,14 @@ class VariableUncertainty:
 
         :param unc_var: uncertainty variable name
         """
-        self._obj.unc._remove_unc_var(self.var_name, unc_var)
+        self._obj.unc._remove_unc_var(self._var_name, unc_var)
 
     def __str__(self):
         """Custom __str__"""
         return "<{}>\nVariable Uncertainties: '{}'\n{}".format(
             self.__class__.__name__,
-            self.var_name,
-            self._obj.unc._var_unc_vars(self.var_name).__repr__(),
+            self._var_name,
+            self._obj.unc._var_unc_vars(self._var_name).__repr__(),
         )
 
     def __repr__(self):
@@ -268,11 +279,11 @@ class VariableUncertainty:
 
     def __len__(self) -> int:
         """
-        Custom  __len__
+        Returns number of variable uncertainties
 
         :returns: number of variable uncertainties
         """
-        return len(self._obj._var_unc_vars(self.var_name))
+        return len(self._obj._var_unc_vars(self._var_name))
 
     def __iter__(self):
         """Custom  __iter__"""
@@ -295,44 +306,162 @@ class VariableUncertainty:
         else:
             raise StopIteration
 
-    @property
-    def comps(self):
-        return self._obj.unc._var_unc_vars(self.var_name)
+    def keys(self) -> List[str]:
+        """
+        Returns uncertainty variable names
+
+        :return: uncertainty variable names
+        """
+        return list(self.comps.keys())
 
     @property
-    def random_comps(self):
+    def comps(self) -> xr.core.dataset.DataVariables:
+        """
+        Returns observation variable uncertainty data variables
+
+        :return: uncertainty data variables
+        """
+
+        return self._obj.unc._var_unc_vars(self._var_name)[self._sli]
+
+    @property
+    def random_comps(self) -> xr.core.dataset.DataVariables:
+        """
+        Returns dataset uncertainty data variables with fully random error-correlation
+
+        :return: uncertainty data variables
+        """
+
         random_comp_names = []
 
         for unc_var_name in self.keys():
             if self[unc_var_name].is_random:
                 random_comp_names.append(unc_var_name)
 
-        return self._obj[random_comp_names].data_vars
+        return self._obj[random_comp_names].data_vars[self._sli]
 
     @property
-    def systematic_comps(self):
+    def structured_comps(self) -> xr.core.dataset.DataVariables:
+        """
+        Returns dataset uncertainty data variables with structured error-correlation
+
+        :return: uncertainty data variables
+        """
+        structured_comp_names = []
+
+        for unc_var_name in self.keys():
+            if self[unc_var_name].is_structured:
+                structured_comp_names.append(unc_var_name)
+
+        return self._obj[structured_comp_names].data_vars[self._sli]
+
+    @property
+    def systematic_comps(self) -> xr.core.dataset.DataVariables:
+        """
+        Returns dataset uncertainty data variables with fully systematic error-correlation
+
+        :return: uncertainty data variables
+        """
         systematic_comp_names = []
 
         for unc_var_name in self.keys():
             if self[unc_var_name].is_systematic:
                 systematic_comp_names.append(unc_var_name)
 
-        return self._obj[systematic_comp_names].data_vars
-
-    def keys(self):
-        return list(self.comps.keys())
+        return self._obj[systematic_comp_names].data_vars[self._sli]
 
     @property
-    def total(self):
+    def total_unc(self) -> xr.DataArray:
+        """
+        Returns observation variable combined uncertainty for all uncertainty components
+
+        :return: total observation variable uncertainty
+        """
+
         return self.comps._dataset.unc._quadsum()
 
     @property
-    def random(self):
+    def random_unc(self) -> xr.DataArray:
+        """
+        Returns observation variable combined uncertainty for uncertainty components with fully random error-correlation
+
+        :return: total random observation variable uncertainty
+        """
+
         return self.random_comps._dataset.unc._quadsum()
 
     @property
-    def systematic(self):
+    def structured_unc(self) -> xr.DataArray:
+        """
+        Returns observation variable combined uncertainty for uncertainty components with structured error-correlation
+
+        :return: total random observation variable uncertainty
+        """
+
+        return self.random_comps._dataset.unc._quadsum()
+
+    @property
+    def systematic_unc(self) -> xr.DataArray:
+        """
+        Returns observation variable combined uncertainty for uncertainty components with fully systematic error-correlation
+
+        :return: total systematic observation variable uncertainty
+        """
+
         return self.systematic_comps._dataset.unc._quadsum()
+
+    @property
+    def total_err_corr_matrix(self) -> xr.DataArray:
+        """
+        Returns observation variable combined error-correlation matrix for all uncertainty components
+
+        :return: total error-correlation matrix
+        """
+
+        total_err_corr_matrix = None
+        for unc in self:
+            if total_err_corr_matrix is None:
+                total_err_corr_matrix = unc[self._sli].err_corr_matrix
+            total_err_corr_matrix *= unc[self._sli].err_corr_matrix
+
+        return total_err_corr_matrix
+
+    @property
+    def structured_err_corr_matrix(self):
+        """
+        Returns observation variable combined error-correlation matrix for uncertainty components that do not have either fully random or fully systematic error-correlation
+
+        :return: structured error-correlation matrix
+        """
+
+        structured_err_corr_matrix = None
+        for unc in self:
+            if unc.is_structured:
+                if structured_err_corr_matrix is None:
+                    structured_err_corr_matrix = unc[self._sli].err_corr_matrix
+                structured_err_corr_matrix *= unc[self._sli].err_corr_matrix
+
+        return structured_err_corr_matrix
+
+    @property
+    def total_err_cov_matrix(self) -> xr.DataArray:
+        """
+        Returns observation variable combined error-covariance matrix for all uncertainty components
+
+        :return: total error-covariance matrix
+        """
+
+        return convert_corr_to_cov(self.total_err_corr_matrix, self.total_unc)
+
+    @property
+    def structured_err_cov_matrix(self):
+        """
+        Returns observation variable combined error-covariance matrix for uncertainty components with structured error-correlation
+
+        :return: structured error-covariance matrix
+        """
+
+        return convert_corr_to_cov(self.structured_err_corr_matrix, self.structured_unc)
 
 
 @xr.register_dataset_accessor("unc")
@@ -344,6 +473,8 @@ class UncAccessor(object):
     """
 
     def __init__(self, xarray_obj: xr.Dataset):
+
+        # Initialise attributes
         self._obj = xarray_obj
 
     def __str__(self) -> str:
@@ -367,15 +498,28 @@ class UncAccessor(object):
         return VariableUncertainty(self._obj, var_name)
 
     def __len__(self):
+        """
+        Returns number of observation variables
+
+        :return: number of observation variables
+        """
+
         return len(self.keys())
 
-    def __iter__(self):
+    def __iter__(self) -> "UncAccessor":
+        """
+        Initialises iterator
+
+        :return: self
+        """
         self.i = 0  # Define counter
         return self
 
     def __next__(self):
         """
-        Returns ith function
+        Returns ith observation variable
+
+        :return: ith obs variable
         """
 
         # Iterate through obs variables
@@ -387,10 +531,21 @@ class UncAccessor(object):
             raise StopIteration
 
     def keys(self):
+        """
+        Returns observation variable names
+
+        :return: observation variable names
+        """
+
         return list(self._obj.unc.obs_vars.keys())
 
     @property
-    def obs_vars(self):
+    def obs_vars(self) -> xr.core.dataset.DataVariables:
+        """
+        Returns dataset observation data variables (defined as dataset variables with uncertainties)
+
+        :return: observation data variables
+        """
         obs_var_names = []
         for var_name in self._obj.variables:
             if self._is_obs_var(var_name):
@@ -398,7 +553,12 @@ class UncAccessor(object):
         return self._obj[obs_var_names].data_vars
 
     @property
-    def unc_vars(self):
+    def unc_vars(self) -> xr.core.dataset.DataVariables:
+        """
+        Returns dataset uncertainty data variables (defined as uncertainties associated with observation variables)
+
+        :return: uncertainty data variables
+        """
         unc_var_names = set()
         for var_name in self.obs_vars:
             var_unc_var_names = self._var_unc_var_names(var_name)
@@ -409,7 +569,13 @@ class UncAccessor(object):
             unc_var_names |= set(var_unc_var_names)
         return self._obj[list(unc_var_names)].data_vars
 
-    def _var_unc_var_names(self, obs_var_name):
+    def _var_unc_var_names(self, obs_var_name: str) -> List[str]:
+        """
+        Returns the names of uncertainty variables associated with specified observation variable
+
+        :param obs_var_name: observation variable name
+        :return: uncertainty variable names
+        """
 
         unc_var_names = []
         if "unc_comps" in self._obj[obs_var_name].attrs:
@@ -419,17 +585,35 @@ class UncAccessor(object):
 
         return unc_var_names
 
-    def _is_obs_var(self, var_name):
+    def _is_obs_var(self, var_name: str) -> bool:
+        """
+        Returns true if named dataset variable is an observation variable
+
+        :return: observation variable flag
+        """
+
         if self._var_unc_var_names(var_name):
             return True
         return False
 
-    def _is_unc_var(self, var_name):
+    def _is_unc_var(self, var_name: str) -> bool:
+        """
+        Returns true if named dataset variable is an uncertainty variable
+
+        :return: uncertainty variable flag
+        """
+
         if var_name in self.unc_vars:
             return True
         return False
 
-    def _var_unc_vars(self, obs_var_name):
+    def _var_unc_vars(self, obs_var_name: str) -> xr.core.dataset.DataVariables:
+        """
+        Returns uncertainty data variables for specified observation variable
+
+        :return: uncertainty data variables
+        """
+
         return self._obj[self._var_unc_var_names(obs_var_name)].data_vars
 
     def _add_unc_var(
@@ -437,7 +621,14 @@ class UncAccessor(object):
         obs_var: str,
         unc_var: str,
         unc_def: Union[xr.DataArray, Tuple[List[str], np.ndarray, Optional[dict]]],
-    ):
+    ) -> None:
+        """
+        Adds an uncertainty variable to the dataset
+
+        :param obs_var: associated observation variable name
+        :param unc_var: uncertainty variable name
+        :param unc_def: either xarray DataArray/Variable, or definition through tuple as ``(dims, data[, attrs])``. ``dims`` is a list of variable dimension names, ``data`` is a numpy array of uncertainty values and ``attrs`` is a dictionary of variable attributes. ``attrs`` should include an element ``pdf_shape`` which defines the uncertainty probability density function form, and ``err_corr`` which defines the error-correlation structure of the data. If omitted ``pdf_shape`` is assumed Gaussian and the error-correlation is assumed random.
+        """
 
         # add uncertainty variable
         if type(unc_def) == xr.DataArray:
@@ -478,11 +669,23 @@ class UncAccessor(object):
         else:
             self._obj[obs_var].attrs["unc_comps"] = unc_var
 
-    def _remove_unc_var(self, obs_var, unc_var):
+    def _remove_unc_var(self, obs_var: str, unc_var: str) -> None:
+        """
+        Removes uncertainty variable from dataset
+
+        :param obs_var: observation variable name
+        :param unc_var: uncertainty variable name
+        """
+
         del self._obj[unc_var]
         self._obj[obs_var].attrs["unc_comps"].remove(unc_var)
 
-    def _quadsum(self):
+    def _quadsum(self) -> xr.DataArray:
+        """
+        Sums data variables in quadrature
+
+        :return: quadratic sum of data variables
+        """
         return sum(d for d in (self._obj ** 2).data_vars.values()) ** 0.5
 
 
