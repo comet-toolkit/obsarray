@@ -32,11 +32,9 @@ class Uncertainty:
 
         self._obj = xarray_obj
         self._unc_var_name = unc_var_name
-        self._sli = sli
-
-        # if no slice provided, define as slice for full array
-        if self._sli is None:
-            self._sli = tuple([slice(None)] * self._obj[self._unc_var_name].ndim)
+        self._sli = tuple([slice(None)] * self._obj[self._unc_var_name].ndim)
+        if sli is not None:
+            self._sli = self.expand_sli(sli)
 
     def __str__(self):
         """Custom __str__"""
@@ -58,8 +56,40 @@ class Uncertainty:
         """
 
         # update slice
-        self._sli = sli
+        self._sli = self.expand_sli(sli)
+
         return self
+
+    def expand_sli(self,sli: tuple) -> tuple:
+        """
+        Function to expand the provided sli so that it always has the right number of dimensions
+
+        :param sli: input sli tuple. This one can have fewer dimensions than the total if e.g. only providing the first index.
+        :type sli: tuple
+        :return: output sli tuple.
+        :rtype: tuple
+        """
+
+        # if no slice provided, define as slice for full array
+        if sli is None:
+            out_sli = tuple([slice(None)] * self._obj[self._unc_var_name].ndim)
+
+        # if the sli tuple has the correct shape, it can be used directly
+        elif len(self._sli)==len(sli):
+            out_sli =  sli
+
+        # If different shape, set each dimension to slice(None) and then change the
+        # ones provided in the new slice. E.g. if providing [0] for a variable with
+        # 3 dimensions, this becomes [0,slice(None),slice(None)]
+        else:
+            out_sli = list([slice(None)] * self._obj[self._unc_var_name].ndim)
+            sli_list=list(self._sli)
+            for i in range(len(sli_list)):
+                if not sli_list[i]==":":
+                    out_sli[i] = sli_list[i]
+            out_sli = tuple(out_sli)
+
+        return out_sli
 
     @property
     def err_corr(self) -> List[Tuple[Union[str, List[str]], BaseErrCorrForm]]:
@@ -187,7 +217,7 @@ class Uncertainty:
         """
 
         # initialise error-correlation matrix
-        err_corr_matrix = empty_err_corr_matrix(self._obj[self._unc_var_name])
+        err_corr_matrix = empty_err_corr_matrix(self._obj[self._unc_var_name][self._sli])
 
         # populate with error-correlation matrices built be each error-correlation
         # parameterisation object
@@ -405,10 +435,11 @@ class VariableUncertainty:
         :return: total error-correlation matrix
         """
 
-        total_err_corr_matrix = empty_err_corr_matrix(self._obj[self._var_name])
+        total_err_corr_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
+
         for unc in self:
-            total_err_corr_matrix = total_err_corr_matrix.values.dot(
-                unc[self._sli].err_corr_matrix
+            total_err_corr_matrix.values = total_err_corr_matrix.values.dot(
+                unc.err_corr_matrix()
             )
 
         return total_err_corr_matrix
@@ -420,12 +451,12 @@ class VariableUncertainty:
         :return: structured error-correlation matrix
         """
 
-        structured_err_corr_matrix = empty_err_corr_matrix(self._obj[self._var_name])
+        structured_err_corr_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
         for unc in self:
             if unc.is_structured:
                 if structured_err_corr_matrix is None:
-                    structured_err_corr_matrix = structured_err_corr_matrix.values.dot(
-                        unc[self._sli].err_corr_matrix
+                    structured_err_corr_matrix.values = structured_err_corr_matrix.values.dot(
+                        unc[self._sli].err_corr_matrix()
                     )
 
         return structured_err_corr_matrix
@@ -437,7 +468,7 @@ class VariableUncertainty:
         :return: total error-covariance matrix
         """
 
-        total_err_cov_matrix = empty_err_corr_matrix(self._obj[self._var_name])
+        total_err_cov_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
 
         total_err_cov_matrix.values = convert_corr_to_cov(
             self.total_err_corr_matrix().values, self.total_unc().values
@@ -452,7 +483,7 @@ class VariableUncertainty:
         :return: structured error-covariance matrix
         """
 
-        structured_err_cov_matrix = empty_err_corr_matrix(self._obj[self._var_name])
+        structured_err_cov_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
 
         structured_err_cov_matrix.values = convert_corr_to_cov(
             self.structured_err_corr_matrix().values, self.structured_unc().values
