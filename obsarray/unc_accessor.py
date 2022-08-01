@@ -398,8 +398,9 @@ class VariableUncertainty:
 
         :return: total observation variable uncertainty
         """
-
-        return self.comps._dataset.unc._quadsum()
+        comps=self.comps
+        if comps is not None:
+            return comps._dataset.unc._quadsum()
 
     def random_unc(self) -> xr.DataArray:
         """
@@ -407,8 +408,9 @@ class VariableUncertainty:
 
         :return: total random observation variable uncertainty
         """
-
-        return self.random_comps._dataset.unc._quadsum()
+        comps=self.random_comps
+        if comps is not None:
+            return comps._dataset.unc._quadsum()
 
     def structured_unc(self) -> xr.DataArray:
         """
@@ -416,8 +418,9 @@ class VariableUncertainty:
 
         :return: total structured observation variable uncertainty
         """
-
-        return self.structured_comps._dataset.unc._quadsum()
+        comps=self.structured_comps
+        if comps is not None:
+            return comps._dataset.unc._quadsum()
 
     def systematic_unc(self) -> xr.DataArray:
         """
@@ -425,8 +428,9 @@ class VariableUncertainty:
 
         :return: total systematic observation variable uncertainty
         """
-
-        return self.systematic_comps._dataset.unc._quadsum()
+        comps=self.systematic_comps
+        if comps is not None:
+            return comps._dataset.unc._quadsum()
 
     def total_err_corr_matrix(self) -> xr.DataArray:
         """
@@ -670,6 +674,9 @@ class UncAccessor(object):
         """
 
         unc_var_names = self._var_unc_var_names(obs_var_name, unc_type=unc_type)
+
+        if len(unc_var_names)==0:
+            return None
 
         if sli is None:
             return self._obj[unc_var_names].data_vars
