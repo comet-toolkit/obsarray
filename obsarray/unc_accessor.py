@@ -4,7 +4,7 @@ from copy import deepcopy
 import numpy as np
 import xarray as xr
 from typing import Union, Tuple, List, Optional
-from comet_maths import convert_corr_to_cov
+from comet_maths import convert_corr_to_cov, correlation_from_covariance
 from obsarray.templater.template_util import create_var
 from obsarray.templater.dataset_util import DatasetUtil
 from obsarray.err_corr import err_corr_forms, BaseErrCorrForm
@@ -235,7 +235,7 @@ class Uncertainty:
         :return: Error-covariance matrix
         """
 
-        err_cov_matrix = empty_err_corr_matrix(self._obj[self._unc_var_name])
+        err_cov_matrix = empty_err_corr_matrix(self._obj[self._unc_var_name][self._sli])
 
         err_cov_matrix.values = convert_corr_to_cov(
             self.err_corr_matrix().values, self.value.values
@@ -441,10 +441,9 @@ class VariableUncertainty:
 
         total_err_corr_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
 
-        for unc in self:
-            total_err_corr_matrix.values = total_err_corr_matrix.values.dot(
-                unc.err_corr_matrix()
-            )
+        total_err_corr_matrix.values = correlation_from_covariance(
+            self.total_err_cov_matrix().values
+        )
 
         return total_err_corr_matrix
 
@@ -456,12 +455,10 @@ class VariableUncertainty:
         """
 
         structured_err_corr_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
-        for unc in self:
-            if unc.is_structured:
-                if structured_err_corr_matrix is None:
-                    structured_err_corr_matrix.values = structured_err_corr_matrix.values.dot(
-                        unc[self._sli].err_corr_matrix()
-                    )
+
+        structured_err_corr_matrix.values = correlation_from_covariance(
+            self.structured_err_cov_matrix().values
+        )
 
         return structured_err_corr_matrix
 
@@ -473,10 +470,11 @@ class VariableUncertainty:
         """
 
         total_err_cov_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
+        covs_sum=np.zeros(total_err_cov_matrix.shape)
+        for unc in self:
+            covs_sum += unc.err_cov_matrix().values
 
-        total_err_cov_matrix.values = convert_corr_to_cov(
-            self.total_err_corr_matrix().values, self.total_unc().values
-        )
+        total_err_cov_matrix.values = covs_sum
 
         return total_err_cov_matrix
 
@@ -489,9 +487,11 @@ class VariableUncertainty:
 
         structured_err_cov_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
 
-        structured_err_cov_matrix.values = convert_corr_to_cov(
-            self.structured_err_corr_matrix().values, self.structured_unc().values
-        )
+        covs_sum=np.zeros(structured_err_cov_matrix.shape)
+        for unc in self:
+            covs_sum += unc.err_cov_matrix().values
+
+        structured_err_cov_matrix.values = covs_sum
 
         return structured_err_cov_matrix
 
