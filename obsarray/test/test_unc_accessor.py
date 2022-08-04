@@ -1,5 +1,6 @@
 """test_unc_accessor - tests for obsarray.unc_accessor"""
 
+from copy import deepcopy
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -47,7 +48,7 @@ def create_ds():
 
     ds = xr.Dataset(
         data_vars=dict(
-            temperature=(["x", "y", "time"], temperature),
+            temperature=(["x", "y", "time"], temperature, {"units": "K"}),
         ),
         coords=dict(
             lon=(["x", "y"], lon),
@@ -61,13 +62,14 @@ def create_ds():
     ds.unc["temperature"]["u_ran_temperature"] = (
         ["x", "y", "time"],
         temperature * 0.05,
-        {"pdf_shape": "gaussian"},
+        {"units": "K", "pdf_shape": "gaussian"},
     )
 
     ds.unc["temperature"]["u_sys_temperature"] = (
         ["x", "y", "time"],
         temperature * 0.03,
         {
+            "units": "K",
             "err_corr": [
                 {
                     "dim": "x",
@@ -91,8 +93,9 @@ def create_ds():
 
     ds.unc["temperature"]["u_str_temperature"] = (
         ["x", "y", "time"],
-        temperature * 0.03,
+        temperature * 0.1,
         {
+            "units": "K",
             "err_corr": [
                 {
                     "dim": "x",
@@ -561,6 +564,30 @@ class TestUncertainty(unittest.TestCase):
             self.assertEqual(dim_tp[0], exp_dim_tp[0])
             compare_err_corr_form(self, dim_tp[1], exp_dim_tp[1])
 
+    def test_units_K(self):
+
+        self.assertEqual(self.ds.unc["temperature"]["u_ran_temperature"].units, "K")
+
+    def test_units_None(self):
+
+        self.ds["u_str_temperature"].attrs.pop("units")
+
+        self.assertIsNone(
+            self.ds.unc["temperature"]["u_str_temperature"].units,
+        )
+
+    def test_var_units_K(self):
+
+        self.assertEqual(self.ds.unc["temperature"]["u_ran_temperature"].var_units, "K")
+
+    def test_var_units_None(self):
+
+        self.ds["temperature"].attrs.pop("units")
+
+        self.assertIsNone(
+            self.ds.unc["temperature"]["u_ran_temperature"].var_units,
+        )
+
     def test_value(self):
 
         xr.testing.assert_equal(
@@ -574,6 +601,48 @@ class TestUncertainty(unittest.TestCase):
             self.ds["u_ran_temperature"][:, 0, :],
             self.ds.unc["temperature"]["u_ran_temperature"][:, 0, :].value,
         )
+
+    def test_var_value(self):
+
+        xr.testing.assert_equal(
+            self.ds["temperature"],
+            self.ds.unc["temperature"]["u_ran_temperature"].var_value,
+        )
+
+    def test_var_value_slice(self):
+
+        xr.testing.assert_equal(
+            self.ds["temperature"][:, 0, :],
+            self.ds.unc["temperature"]["u_ran_temperature"][:, 0, :].var_value,
+        )
+
+    def test_abs_value_percentage(self):
+        self.ds["u_str_temperature"].attrs["units"] = "%"
+        self.ds["u_str_temperature"].values[:] = 10.0
+
+        exp_da = deepcopy(self.ds["u_str_temperature"])
+        exp_da.values = self.ds["temperature"] / 10.0
+
+        xr.testing.assert_allclose(
+            exp_da,
+            self.ds.unc["temperature"]["u_str_temperature"].abs_value,
+        )
+
+    def test_abs_value_sameunits(self):
+
+        xr.testing.assert_equal(
+            self.ds.unc["temperature"]["u_str_temperature"].value,
+            self.ds.unc["temperature"]["u_str_temperature"].abs_value,
+        )
+
+    def test_abs_value_diffunits(self):
+
+        self.ds["u_str_temperature"].attrs["units"] = "mK"
+
+        def unitcall(ds):
+            ds.unc["temperature"]["u_str_temperature"].abs_value
+
+        self.assertRaises(ValueError, unitcall, self.ds)
 
     def test_pdf_shape(self):
         self.assertEqual(

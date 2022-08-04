@@ -25,13 +25,18 @@ class Uncertainty:
     """
 
     def __init__(
-        self, xarray_obj: xr.Dataset, unc_var_name: str, sli: Optional[tuple] = None
+        self,
+        xarray_obj: xr.Dataset,
+        var_name: str,
+        unc_var_name: str,
+        sli: Optional[tuple] = None,
     ):
 
         # initialise attributes
 
         self._obj = xarray_obj
         self._unc_var_name = unc_var_name
+        self._var_name = var_name
         self._sli = tuple([slice(None)] * self._obj[self._unc_var_name].ndim)
         if sli is not None:
             self._sli = self.expand_sli(sli)
@@ -60,7 +65,7 @@ class Uncertainty:
 
         return self
 
-    def expand_sli(self,sli: tuple) -> tuple:
+    def expand_sli(self, sli: tuple) -> tuple:
         """
         Function to expand the provided sli so that it always has the right number of dimensions
 
@@ -75,17 +80,17 @@ class Uncertainty:
             out_sli = tuple([slice(None)] * self._obj[self._unc_var_name].ndim)
 
         # if the sli tuple has the correct shape, it can be used directly
-        elif len(self._sli)==len(sli):
-            out_sli =  sli
+        elif len(self._sli) == len(sli):
+            out_sli = sli
 
         # If different shape, set each dimension to slice(None) and then change the
         # ones provided in the new slice. E.g. if providing [0] for a variable with
         # 3 dimensions, this becomes [0,slice(None),slice(None)]
         else:
             out_sli = list([slice(None)] * self._obj[self._unc_var_name].ndim)
-            sli_list=list(self._sli)
+            sli_list = list(self._sli)
             for i in range(len(sli_list)):
-                if not sli_list[i]==":":
+                if not sli_list[i] == ":":
                     out_sli[i] = sli_list[i]
             out_sli = tuple(out_sli)
 
@@ -157,6 +162,41 @@ class Uncertainty:
         return err_corr
 
     @property
+    def units(self) -> Union[str, None]:
+        """
+        Return uncertainty variable units
+
+        :return: uncertainty variable units
+        """
+        return (
+            self._obj[self._unc_var_name].attrs["units"]
+            if "units" in self._obj[self._unc_var_name].attrs
+            else None
+        )
+
+    @property
+    def var_units(self) -> Union[str, None]:
+        """
+        Returns units of observation variable associated with uncertainty variable
+
+        :return: observation variable units
+        """
+        return (
+            self._obj[self._var_name].attrs["units"]
+            if "units" in self._obj[self._var_name].attrs
+            else None
+        )
+
+    @property
+    def var_value(self) -> xr.DataArray:
+        """
+        Returns value of observation variable associated with uncertainty variable
+
+        :return: observation variable
+        """
+        return self._obj[self._var_name][self._sli]
+
+    @property
     def value(self) -> xr.DataArray:
         """
         Return uncertainty data array
@@ -164,6 +204,31 @@ class Uncertainty:
         :return: uncertainty variable
         """
         return self._obj[self._unc_var_name][self._sli]
+
+    @property
+    def abs_value(self) -> xr.DataArray:
+        """
+        Returns uncertainty values with units that match those of the observation variable
+
+        NB: only currently converts % to absolute, can't handle mismatched units
+
+        :return: uncertainty values with same units as observation variable
+        """
+
+        if self.var_units is not None:
+            if self.units == "%":
+                return self.value / 100 * self.var_value
+
+            elif self.units != self.var_units:
+                raise ValueError(
+                    "Unit mismatch between observation variable and uncertainty variable:\n"
+                    "* '{}' - '{}'\n"
+                    "* '{}' - '{}'".format(
+                        self._var_name, self.var_units, self._unc_var_name, self.units
+                    )
+                )
+
+        return self.value
 
     @property
     def pdf_shape(self):
@@ -217,7 +282,9 @@ class Uncertainty:
         """
 
         # initialise error-correlation matrix
-        err_corr_matrix = empty_err_corr_matrix(self._obj[self._unc_var_name][self._sli])
+        err_corr_matrix = empty_err_corr_matrix(
+            self._obj[self._unc_var_name][self._sli]
+        )
 
         # populate with error-correlation matrices built be each error-correlation
         # parameterisation object
@@ -268,7 +335,7 @@ class VariableUncertainty:
         """
 
         if isinstance(key, str):
-            return Uncertainty(self._obj, key, self._sli)
+            return Uncertainty(self._obj, self._var_name, key, self._sli)
 
         self._sli = key
         return self
@@ -398,7 +465,7 @@ class VariableUncertainty:
 
         :return: total observation variable uncertainty
         """
-        comps=self.comps
+        comps = self.comps_to_var_units(self.comps)
         if comps is not None:
             return comps._dataset.unc._quadsum()
 
@@ -408,7 +475,7 @@ class VariableUncertainty:
 
         :return: total random observation variable uncertainty
         """
-        comps=self.random_comps
+        comps = self.random_comps
         if comps is not None:
             return comps._dataset.unc._quadsum()
 
@@ -418,7 +485,7 @@ class VariableUncertainty:
 
         :return: total structured observation variable uncertainty
         """
-        comps=self.structured_comps
+        comps = self.structured_comps
         if comps is not None:
             return comps._dataset.unc._quadsum()
 
@@ -428,7 +495,7 @@ class VariableUncertainty:
 
         :return: total systematic observation variable uncertainty
         """
-        comps=self.systematic_comps
+        comps = self.systematic_comps
         if comps is not None:
             return comps._dataset.unc._quadsum()
 
@@ -439,7 +506,9 @@ class VariableUncertainty:
         :return: total error-correlation matrix
         """
 
-        total_err_corr_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
+        total_err_corr_matrix = empty_err_corr_matrix(
+            self._obj[self._var_name][self._sli]
+        )
 
         total_err_corr_matrix.values = correlation_from_covariance(
             self.total_err_cov_matrix().values
@@ -454,7 +523,9 @@ class VariableUncertainty:
         :return: structured error-correlation matrix
         """
 
-        structured_err_corr_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
+        structured_err_corr_matrix = empty_err_corr_matrix(
+            self._obj[self._var_name][self._sli]
+        )
 
         structured_err_corr_matrix.values = correlation_from_covariance(
             self.structured_err_cov_matrix().values
@@ -469,8 +540,10 @@ class VariableUncertainty:
         :return: total error-covariance matrix
         """
 
-        total_err_cov_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
-        covs_sum=np.zeros(total_err_cov_matrix.shape)
+        total_err_cov_matrix = empty_err_corr_matrix(
+            self._obj[self._var_name][self._sli]
+        )
+        covs_sum = np.zeros(total_err_cov_matrix.shape)
         for unc in self:
             covs_sum += unc.err_cov_matrix().values
 
@@ -485,9 +558,11 @@ class VariableUncertainty:
         :return: structured error-covariance matrix
         """
 
-        structured_err_cov_matrix = empty_err_corr_matrix(self._obj[self._var_name][self._sli])
+        structured_err_cov_matrix = empty_err_corr_matrix(
+            self._obj[self._var_name][self._sli]
+        )
 
-        covs_sum=np.zeros(structured_err_cov_matrix.shape)
+        covs_sum = np.zeros(structured_err_cov_matrix.shape)
         for unc in self:
             covs_sum += unc.err_cov_matrix().values
 
@@ -675,7 +750,7 @@ class UncAccessor(object):
 
         unc_var_names = self._var_unc_var_names(obs_var_name, unc_type=unc_type)
 
-        if len(unc_var_names)==0:
+        if len(unc_var_names) == 0:
             return None
 
         if sli is None:
