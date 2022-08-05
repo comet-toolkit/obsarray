@@ -20,7 +20,7 @@ simple_ds = xr.Dataset(
 
 
 def simple_build_matrix(sli):
-    return np.ones((12, 12))
+    return np.eye(12)
 
 
 mock_err_corr_form = mock.MagicMock()
@@ -685,7 +685,7 @@ class TestUncertainty(unittest.TestCase):
     def test_err_corr_matrix_3dvar(self):
         erc = self.ds.unc["temperature"]["u_ran_temperature"].err_corr_matrix()
 
-        exp_erc = xr.DataArray(np.full((12, 12), 3), dims=["x.y.time", "x.y.time"])
+        exp_erc = xr.DataArray(np.eye(12), dims=["x.y.time", "x.y.time"])
         xr.testing.assert_equal(erc, exp_erc)
 
     @patch("obsarray.unc_accessor.Uncertainty.value")
