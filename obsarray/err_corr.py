@@ -173,7 +173,7 @@ class SystematicCorrelation(BaseErrCorrForm):
         return self.slice_full_cov(full_matrix, sli)
 
 
-@register_err_corr_form("custom")
+@register_err_corr_form("err_corr_matrix")
 class ErrCorrMatrixCorrelation(BaseErrCorrForm):
 
     form = "err_corr_matrix"
