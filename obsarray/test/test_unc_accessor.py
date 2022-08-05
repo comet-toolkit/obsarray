@@ -270,21 +270,7 @@ class TestUncAccessor(unittest.TestCase):
         )
 
     def test__var_unc_vars_none(self):
-        unc_vars = self.ds.unc._var_unc_vars("u_r_temperature")
-        self.assertEqual(type(unc_vars), xr.core.dataset.DataVariables)
-        self.assertCountEqual(list(unc_vars.variables), [])
-
-    def test__quadsum(self):
-
-        test_ds = xr.Dataset(
-            data_vars=dict(
-                a=(["x"], np.ones(3) * 3),
-                b=(["x"], np.ones(3) * 4),
-            )
-        )
-        c = test_ds.unc._quadsum()
-
-        np.testing.assert_array_equal(c.values, np.ones(3) * 5)
+        self.assertIsNone(self.ds.unc._var_unc_vars("u_r_temperature"))
 
     def test__add_unc_var_DataArray(self):
         u_s_precipitation = xr.DataArray(
@@ -510,10 +496,25 @@ class TestUncertainty(unittest.TestCase):
     def setUp(self):
         self.ds = create_ds()
 
-    def test___getitem__(self):
+    @patch("obsarray.unc_accessor.Uncertainty.expand_sli", return_value="slice")
+    def test___getitem__(self, m):
         self.assertEqual(
-            self.ds.unc["temperature"]["u_ran_temperature"]["slice"]._sli, "slice"
+            self.ds.unc["temperature"]["u_ran_temperature"]["in_slice"]._sli, "slice"
         )
+
+        m.assert_called_with("in_slice")
+
+    def test_expand_slice_full(self):
+        sli = self.ds.unc["temperature"]["u_ran_temperature"].expand_sli((1, 1, 1))
+        self.assertEqual((1, 1, 1), sli)
+
+    def test_expand_slice_None(self):
+        sli = self.ds.unc["temperature"]["u_ran_temperature"].expand_sli()
+        self.assertEqual((slice(None), slice(None), slice(None)), sli)
+
+    def test_expand_slice_first(self):
+        sli = self.ds.unc["temperature"]["u_ran_temperature"].expand_sli((0,))
+        self.assertEqual((0, slice(None), slice(None)), sli)
 
     def test_err_corr(self):
 

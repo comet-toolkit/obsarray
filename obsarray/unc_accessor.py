@@ -65,7 +65,7 @@ class Uncertainty:
 
         return self
 
-    def expand_sli(self, sli: tuple) -> tuple:
+    def expand_sli(self, sli: Optional[tuple] = None) -> tuple:
         """
         Function to expand the provided sli so that it always has the right number of dimensions
 
@@ -80,7 +80,7 @@ class Uncertainty:
             out_sli = tuple([slice(None)] * self._obj[self._unc_var_name].ndim)
 
         # if the sli tuple has the correct shape, it can be used directly
-        elif len(self._sli) == len(sli):
+        elif self._obj[self._unc_var_name].ndim == len(sli):
             out_sli = sli
 
         # If different shape, set each dimension to slice(None) and then change the
@@ -88,7 +88,7 @@ class Uncertainty:
         # 3 dimensions, this becomes [0,slice(None),slice(None)]
         else:
             out_sli = list([slice(None)] * self._obj[self._unc_var_name].ndim)
-            sli_list = list(self._sli)
+            sli_list = list(sli)
             for i in range(len(sli_list)):
                 if not sli_list[i] == ":":
                     out_sli[i] = sli_list[i]
