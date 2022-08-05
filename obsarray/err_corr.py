@@ -195,5 +195,23 @@ class ErrCorrMatrixCorrelation(BaseErrCorrForm):
         return self.slice_full_cov(full_matrix, sli)
 
 
+@register_err_corr_form("ensemble")
+class EnsembleCorrelation(BaseErrCorrForm):
+
+    form = "ensemble"
+
+    def build_matrix(self, sli):
+        """
+        Returns uncertainty effect error-correlation matrix, populated with error-correlation values defined
+        in this parameterisation
+
+        :param sli: slice of observation variable to return error-correlation matrix for
+
+        :return: populated error-correlation matrix
+        """
+
+        raise NotImplementedError
+
+
 if __name__ == "__main__":
     pass
