@@ -445,45 +445,48 @@ class TestVariableUncertainty(unittest.TestCase):
 
         self.assertEqual(comps, mock_method.return_value)
 
-    @patch(
-        "obsarray.unc_accessor.VariableUncertainty.comps",
-        mock.PropertyMock(return_value=simple_ds),
-    )
-    def test_total_unc(self):
-        xr.testing.assert_identical(
-            self.ds.unc["temperature"][:, :, 0].total_unc(),
-            xr.DataArray(np.full((2, 2), 5), dims=["x", "y"]),
+    def test__quadsum_unc(self):
+
+        self.ds["u_ran_temperature"].values[:] = 3.0
+        self.ds["u_str_temperature"].values[:] = (
+            4.0 / self.ds["temperature"].values * 100.0
+        )
+        self.ds["u_str_temperature"].attrs["units"] = "%"
+
+        u_tot = self.ds.unc["temperature"][:, :, 0]._quadsum_unc(
+            ["u_ran_temperature", "u_str_temperature"]
+        )
+        exp_u_tot = deepcopy(self.ds["temperature"])
+        exp_u_tot.values[:] = 5.0
+
+        xr.testing.assert_allclose(u_tot, exp_u_tot[:, :, 0])
+
+    def test__quadsum_unc_None(self):
+        self.assertIsNone(self.ds.unc["temperature"]._quadsum_unc([]))
+
+    @patch("obsarray.unc_accessor.VariableUncertainty._quadsum_unc")
+    def test_total_unc(self, mock):
+        self.ds.unc["temperature"][:, :, 0].total_unc()
+        mock.assert_called_once()
+        self.assertCountEqual(
+            mock.mock_calls[0][1][0],
+            ["u_ran_temperature", "u_str_temperature", "u_sys_temperature"],
         )
 
-    @patch(
-        "obsarray.unc_accessor.VariableUncertainty.random_comps",
-        mock.PropertyMock(return_value=simple_ds),
-    )
-    def test_random_unc(self):
-        xr.testing.assert_identical(
-            self.ds.unc["temperature"][:, :, 0].random_unc(),
-            xr.DataArray(np.full((2, 2), 5), dims=["x", "y"]),
-        )
+    @patch("obsarray.unc_accessor.VariableUncertainty._quadsum_unc")
+    def test_random_unc(self, mock):
+        self.ds.unc["temperature"][:, :, 0].random_unc()
+        mock.assert_called_once_with(["u_ran_temperature"])
 
-    @patch(
-        "obsarray.unc_accessor.VariableUncertainty.structured_comps",
-        mock.PropertyMock(return_value=simple_ds),
-    )
-    def test_structured_unc(self):
-        xr.testing.assert_identical(
-            self.ds.unc["temperature"][:, :, 0].structured_unc(),
-            xr.DataArray(np.full((2, 2), 5), dims=["x", "y"]),
-        )
+    @patch("obsarray.unc_accessor.VariableUncertainty._quadsum_unc")
+    def test_structured_unc(self, mock):
+        self.ds.unc["temperature"][:, :, 0].structured_unc()
+        mock.assert_called_once_with(["u_str_temperature"])
 
-    @patch(
-        "obsarray.unc_accessor.VariableUncertainty.systematic_comps",
-        mock.PropertyMock(return_value=simple_ds),
-    )
-    def test_systematic_unc(self):
-        xr.testing.assert_identical(
-            self.ds.unc["temperature"][:, :, 0].systematic_unc(),
-            xr.DataArray(np.full((2, 2), 5), dims=["x", "y"]),
-        )
+    @patch("obsarray.unc_accessor.VariableUncertainty._quadsum_unc")
+    def test_systematic_unc(self, mock):
+        self.ds.unc["temperature"][:, :, 0].systematic_unc()
+        mock.assert_called_once_with(["u_sys_temperature"])
 
     @patch(
         "obsarray.unc_accessor.Uncertainty.err_corr_matrix",

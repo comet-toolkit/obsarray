@@ -459,15 +459,28 @@ class VariableUncertainty:
             self._var_name, self._sli, unc_type="systematic"
         )
 
+    def _quadsum_unc(self, unc_var_names):
+        quadsum_unc = None
+        for i, unc_var_name in enumerate(unc_var_names):
+            if i == 0:
+                quadsum_unc = deepcopy(self[unc_var_name].abs_value ** 2.0)
+                quadsum_unc.name = None
+            else:
+                quadsum_unc += self[unc_var_name].abs_value ** 2.0
+
+        if quadsum_unc is not None:
+            quadsum_unc = quadsum_unc ** 0.5
+
+        return quadsum_unc
+
     def total_unc(self) -> xr.DataArray:
         """
-        Returns observation variable combined uncertainty for all uncertainty components
+        Returns observation variable combined uncertainty for all uncertainty components (in absolute units)
 
         :return: total observation variable uncertainty
         """
-        comps = self.comps_to_var_units(self.comps)
-        if comps is not None:
-            return comps._dataset.unc._quadsum()
+
+        return self._quadsum_unc(self._obj.unc._var_unc_var_names(self._var_name))
 
     def random_unc(self) -> xr.DataArray:
         """
@@ -475,9 +488,10 @@ class VariableUncertainty:
 
         :return: total random observation variable uncertainty
         """
-        comps = self.random_comps
-        if comps is not None:
-            return comps._dataset.unc._quadsum()
+
+        return self._quadsum_unc(
+            self._obj.unc._var_unc_var_names(self._var_name, unc_type="random")
+        )
 
     def structured_unc(self) -> xr.DataArray:
         """
@@ -485,9 +499,10 @@ class VariableUncertainty:
 
         :return: total structured observation variable uncertainty
         """
-        comps = self.structured_comps
-        if comps is not None:
-            return comps._dataset.unc._quadsum()
+
+        return self._quadsum_unc(
+            self._obj.unc._var_unc_var_names(self._var_name, unc_type="structured")
+        )
 
     def systematic_unc(self) -> xr.DataArray:
         """
@@ -495,9 +510,10 @@ class VariableUncertainty:
 
         :return: total systematic observation variable uncertainty
         """
-        comps = self.systematic_comps
-        if comps is not None:
-            return comps._dataset.unc._quadsum()
+
+        return self._quadsum_unc(
+            self._obj.unc._var_unc_var_names(self._var_name, unc_type="systematic")
+        )
 
     def total_err_corr_matrix(self) -> xr.DataArray:
         """
@@ -822,14 +838,6 @@ class UncAccessor(object):
 
         del self._obj[unc_var]
         self._obj[obs_var].attrs["unc_comps"].remove(unc_var)
-
-    def _quadsum(self) -> xr.DataArray:
-        """
-        Sums data variables in quadrature
-
-        :return: quadratic sum of data variables
-        """
-        return sum(d for d in (self._obj ** 2).data_vars.values()) ** 0.5
 
 
 if __name__ == "__main__":
