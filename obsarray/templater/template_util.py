@@ -11,7 +11,8 @@ __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
 
 
 def create_ds(
-    template: Dict[str, Dict], size: Dict[str, int], metadata: Optional[Dict] = None
+    template: Dict[str, Dict], size: Dict[str, int], metadata: Optional[Dict] = None,
+        propagate_ds: Optional[xarray.Dataset] = None,
 ) -> xarray.Dataset:
     """
     Returns template dataset
@@ -19,7 +20,9 @@ def create_ds(
     :param template: dictionary defining ds variable structure, as defined below.
     :param size: dictionary of dataset dimensions, entry per dataset dimension with value of size as int
     :param metadata: dictionary of dataset metadata
-
+    :param propagate_ds: template dataset is populated with data from propagate_ds for their variables with
+    common names and dimensions. Useful for transferring common data between datasets at different processing levels
+    (e.g. times, etc.).
     :returns: template dataset
 
     For the ``template`` dictionary each key/value pair defines one variable, where the key is the variable name and the value is a dictionary with the following entries:
@@ -43,6 +46,10 @@ def create_ds(
     # Add metadata
     if metadata is not None:
         ds = TemplateUtil.add_metadata(ds, metadata)
+
+    # Propagate variable data
+    if propagate_ds is not None:
+        TemplateUtil.propagate_values(ds, propagate_ds)
 
     return ds
 
@@ -78,7 +85,6 @@ class TemplateUtil:
 
         :returns: dataset with defined variables
         """
-
         for var_name in template.keys():
             var = TemplateUtil._create_var(var_name, template[var_name], size)
 
@@ -117,7 +123,7 @@ class TemplateUtil:
             )
 
         # Create variable and add to dataset
-        if dtype == str:
+        if isinstance(dtype,str):
             if dtype == "flag":
                 flag_meanings = attributes.pop("flag_meanings")
                 variable = du.create_flags_variable(
@@ -194,6 +200,39 @@ class TemplateUtil:
         ds.attrs.update(metadata)
 
         return ds
+
+    @staticmethod
+    def propagate_values(target_ds, source_ds, exclude=None):
+        """
+        Populates target_ds in-place with data from source_ds for their variables with common names and dimensions.
+        Useful for transferring common data between datasets at different processing levels (e.g. times, etc.).
+
+        N.B. propagates data only, not variables as a whole with attributes etc.
+
+        :type target_ds: xarray.Dataset
+        :param target_ds: ds to populate (perhaps data at new processing level)
+
+        :type source_ds: xarray.Dataset
+        :param source_ds: ds to take data from (perhaps data at previous processing level)
+        """
+
+        # Find variable names common to target_ds and source_ds, excluding specified exclude variables
+        common_variable_names = list(set(target_ds).intersection(source_ds))
+        #common_variable_names = list(set(target_ds.variables).intersection(source_ds.variables))
+        #print(common_variable_names)
+
+        if exclude is not None:
+            common_variable_names = [name for name in common_variable_names if name not in exclude]
+
+        # Remove any common variables that have different dimensions in target_ds and source_ds
+        common_variable_names = [name for name in common_variable_names if target_ds[name].dims == source_ds[name].dims]
+
+        # Propagate data
+        for common_variable_name in common_variable_names:
+            if target_ds[common_variable_name].shape == source_ds[common_variable_name].shape:
+                target_ds[common_variable_name].values = source_ds[common_variable_name].values
+
+        #to do - add method to propagate common unpopulated metadata
 
 
 if __name__ == "__main__":
