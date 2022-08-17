@@ -86,7 +86,7 @@ class DatasetUtil:
             fill_value = DatasetUtil.get_default_fill_value(dtype)
 
         default_array = DatasetUtil.create_default_array(
-            dim_sizes, dtype, fill_value=fill_value
+            dim_sizes, dtype, dim_names, fill_value=fill_value
         )
 
         if dim_names is None:
@@ -153,7 +153,10 @@ class DatasetUtil:
         # set undefined dims as random
         defined_err_corr_dims = []
         for erd in err_corr:
-            defined_err_corr_dims.append(erd["dim"])
+            if isinstance(erd["dim"],str):
+                defined_err_corr_dims.append(erd["dim"])
+            else:
+                defined_err_corr_dims.extend(erd["dim"])
 
         missing_err_corr_dims = [
             dim for dim in dim_names if dim not in defined_err_corr_dims
@@ -345,6 +348,184 @@ class DatasetUtil:
             return numpy.float32(9.96921e36)
         elif dtype == numpy.float64:
             return numpy.float64(9.969209968386869e36)
+
+    @staticmethod
+    def _get_flag_encoding(da):
+        """
+        Returns flag encoding for flag type data array
+        :type da: xarray.DataArray
+        :param da: data array
+        :return: flag meanings
+        :rtype: list
+        :return: flag masks
+        :rtype: list
+        """
+
+        try:
+            flag_meanings = da.attrs["flag_meanings"].split()
+            flag_masks = [int(fm) for fm in da.attrs["flag_masks"].split(",")]
+        except KeyError:
+            raise KeyError(da.name + " not a flag variable")
+
+        return flag_meanings, flag_masks
+
+    @staticmethod
+    def unpack_flags(da):
+        """
+        Breaks down flag data array into dataset of boolean masks for each flag
+        :type da: xarray.DataArray
+        :param da: dataset
+        :return: flag masks
+        :rtype: xarray.Dataset
+        """
+
+        flag_meanings, flag_masks = DatasetUtil._get_flag_encoding(da)
+
+        ds = xarray.Dataset()
+        for flag_meaning, flag_mask in zip(flag_meanings, flag_masks):
+            ds[flag_meaning] = DatasetUtil.create_variable(list(da.shape), bool, dim_names=list(da.dims))
+            ds[flag_meaning] = (da & flag_mask).astype(bool)
+
+        return ds
+
+    @staticmethod
+    def get_flags_mask_or(da, flags=None):
+        """
+        Returns boolean mask for set of flags, defined as logical or of flags
+
+        :type da: xarray.DataArray
+        :param da: dataset
+
+        :type flags: list
+        :param flags: list of flags (if unset all data flags selected)
+
+        :return: flag masks
+        :rtype: numpy.ndarray
+        """
+
+        flags_ds = DatasetUtil.unpack_flags(da)
+
+        flags = flags if flags is not None else flags_ds.variables
+        mask_flags = [flags_ds[flag].values for flag in flags]
+
+        return numpy.logical_or.reduce(mask_flags)
+
+    @staticmethod
+    def get_flags_mask_and(da, flags=None):
+        """
+        Returns boolean mask for set of flags, defined as logical and of flags
+
+        :type da: xarray.DataArray
+        :param da: dataset
+
+        :type flags: list
+        :param flags: list of flags (if unset all data flags selected)
+
+        :return: flag masks
+        :rtype: numpy.ndarray
+        """
+
+        flags_ds = DatasetUtil.unpack_flags(da)
+
+        flags = flags if flags is not None else flags_ds.variables
+        mask_flags = [flags_ds[flag].values for flag in flags]
+
+        return numpy.logical_and.reduce(mask_flags)
+
+    @staticmethod
+    def set_flag(da, flag_name, error_if_set=False):
+        """
+        Sets named flag for elements in data array
+        :type da: xarray.DataArray
+        :param da: dataset
+        :type flag_name: str
+        :param flag_name: name of flag to set
+        :type error_if_set: bool
+        :param error_if_set: raises error if chosen flag is already set for any element
+        """
+
+        set_flags = DatasetUtil.unpack_flags(da)[flag_name]
+
+        if numpy.any(set_flags == True) and error_if_set:
+            raise ValueError("Flag " + flag_name + " already set for variable " + da.name)
+
+        # Find flag mask
+        flag_meanings, flag_masks = DatasetUtil._get_flag_encoding(da)
+        flag_bit = flag_meanings.index(flag_name)
+        flag_mask = flag_masks[flag_bit]
+
+        da.values = da.values | flag_mask
+
+        return da
+
+    @staticmethod
+    def unset_flag(da, flag_name, error_if_unset=False):
+        """
+        Unsets named flag for specified index of dataset variable
+        :type da: xarray.DataArray
+        :param da: data array
+        :type flag_name: str
+        :param flag_name: name of flag to unset
+        :type error_if_unset: bool
+        :param error_if_unset: raises error if chosen flag is already set at specified index
+        """
+
+        set_flags = DatasetUtil.unpack_flags(da)[flag_name]
+
+        if numpy.any(set_flags == False) and error_if_unset:
+            raise ValueError("Flag " + flag_name + " already set for variable " + da.name)
+
+        # Find flag mask
+        flag_meanings, flag_masks = DatasetUtil._get_flag_encoding(da)
+        flag_bit = flag_meanings.index(flag_name)
+        flag_mask = flag_masks[flag_bit]
+
+        da.values = da.values & ~flag_mask
+
+        return da
+
+    @staticmethod
+    def get_set_flags(da):
+        """
+        Return list of set flags for single element data array
+        :type da: xarray.DataArray
+        :param da: single element data array
+        :return: set flags
+        :rtype: list
+        """
+
+        if da.shape != ():
+            raise ValueError("Must pass single element data array")
+
+        flag_meanings, flag_masks = DatasetUtil._get_flag_encoding(da)
+
+        set_flags = []
+        for flag_meaning, flag_mask in zip(flag_meanings, flag_masks):
+            if (da & flag_mask):
+                set_flags.append(flag_meaning)
+
+        return set_flags
+
+    @staticmethod
+    def check_flag_set(da, flag_name):
+        """
+        Returns if flag for single element data array
+        :type da: xarray.DataArray
+        :param da: single element data array
+        :type flag_name: str
+        :param flag_name: name of flag to set
+        :return: set flags
+        :rtype: list
+        """
+
+        if da.shape != ():
+            raise ValueError("Must pass single element data array")
+
+        set_flags = DatasetUtil.get_set_flags(da)
+
+        if flag_name in set_flags:
+            return True
+        return False
 
 
 if __name__ == "__main__":

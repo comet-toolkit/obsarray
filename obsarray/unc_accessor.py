@@ -79,9 +79,9 @@ class Uncertainty:
         if sli is None:
             out_sli = tuple([slice(None)] * self._obj[self._unc_var_name].ndim)
 
-        # if the sli tuple has the correct shape, it can be used directly
-        elif self._obj[self._unc_var_name].ndim == len(sli):
-            out_sli = sli
+        # # if the sli tuple has the correct shape, it can be used directly
+        # elif self._obj[self._unc_var_name].ndim == len(sli):
+        #     out_sli = sli
 
         # If different shape, set each dimension to slice(None) and then change the
         # ones provided in the new slice. E.g. if providing [0] for a variable with
@@ -246,8 +246,10 @@ class Uncertainty:
 
         :return: random uncertainty flag
         """
-
-        return all(e[1].is_random is True for e in self.err_corr)
+        if len(self.err_corr)>0:
+            return all(e[1].is_random is True for e in self.err_corr)
+        else:
+            return False
 
     @property
     def is_structured(self) -> bool:
