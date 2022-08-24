@@ -285,6 +285,50 @@ class TestTemplateUtil(unittest.TestCase):
         self.assertEqual(type(ds["array_variable"]), xarray.DataArray)
         self.assertEqual("value", ds.attrs["metadata1"])
 
+    def test_create_template_dataset_withunc(self):
+        dim_sizes = {"dim1": 25}
+
+        test_variables = {
+            "array_variable": {
+                "dim": ["dim1"],
+                "dtype": np.float32,
+                "attributes": {
+                    "standard_name": "array_variable_std_name",
+                    "long_name": "array_variable_long_name",
+                    "units": "units",
+                    "preferred_symbol": "av",
+                    "unc_comps": ["u_array_variable"],
+                },
+                "encoding": {"dtype": np.uint16, "scale_factor": 1.0, "offset": 0.0},
+            },
+            "u_array_variable": {
+                "dim": ["dim1"],
+                "dtype": np.float32,
+                "attributes": {
+                    "err_corr": [
+                        {
+                            "dim": ["dim1"],
+                            "form": "rectangle_absolute",
+                            "params": [1, 2],
+                            "units": ["m", "m"],
+                        },
+                    ],
+                    "standard_name": "array_variable_std_name",
+                    "long_name": "array_variable_long_name",
+                    "units": "units",
+                    "preferred_symbol": "av",
+                },
+            },
+        }
+
+        test_metadata = {"metadata1": "value"}
+
+        ds = create_ds(test_variables, dim_sizes, test_metadata)
+
+        self.assertEqual(type(ds), xarray.Dataset)
+        self.assertEqual(type(ds["array_variable"]), xarray.DataArray)
+        self.assertEqual("value", ds.attrs["metadata1"])
+
 
 if __name__ == "__main__":
     unittest.main()
