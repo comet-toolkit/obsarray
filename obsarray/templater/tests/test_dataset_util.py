@@ -173,7 +173,36 @@ class TestDatasetUtil(unittest.TestCase):
         self.assertEqual(-127, array_variable[2, 4, 2])
         self.assertEqual("std", array_variable.attrs["standard_name"])
 
-    def test_create_unc_variable(self):
+    def test_create_unc_variable_1dimundef(self):
+        err_corr = [
+            {
+                "dim": ["x"],
+                "form": "rectangle_absolute",
+                "params": [1, 2],
+                "units": ["m", "m"],
+            },
+        ]
+
+        unc_variable = DatasetUtil.create_unc_variable(
+            [7],
+            np.int8,
+            ["x"],
+            pdf_shape="gaussian",
+            err_corr=err_corr,
+        )
+
+        expected_attrs = {
+            "err_corr_1_dim": "x",
+            "err_corr_1_form": "rectangle_absolute",
+            "err_corr_1_units": ["m", "m"],
+            "err_corr_1_params": [1, 2],
+        }
+
+        actual_attrs = unc_variable.attrs
+
+        self.assertTrue(expected_attrs.items() <= actual_attrs.items())
+
+    def test_create_unc_variable_1undef(self):
         err_corr = [
             {
                 "dim": "x",
