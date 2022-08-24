@@ -192,7 +192,7 @@ class TestDatasetUtil(unittest.TestCase):
         )
 
         expected_attrs = {
-            "err_corr_1_dim": "x",
+            "err_corr_1_dim": ["x"],
             "err_corr_1_form": "rectangle_absolute",
             "err_corr_1_units": ["m", "m"],
             "err_corr_1_params": [1, 2],
