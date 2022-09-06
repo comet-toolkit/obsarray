@@ -1,6 +1,7 @@
 # required modules
 numpy
 xarray
+comet_maths
 
 # for docs
 sphinx
