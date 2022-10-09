@@ -14,32 +14,32 @@ class NewForm(BaseErrCorrForm):
         return "abc"
 
 
-ds = xr.open_dataset("obs_example.nc")
-
-ds.unc["temperature"]["u_sys_temperature"] = (
-    ["x", "y", "time"],
-    ds.temperature * 0.03,
-    {
-        "err_corr": [
-            {
-                "dim": "x",
-                "form": "new",
-                "params": [],
-            },
-            {
-                "dim": "y",
-                "form": "systematic",
-                "params": [],
-            },
-            {
-                "dim": "time",
-                "form": "systematic",
-                "params": [],
-            },
-        ]
-    },
-)
-
-p = ds.unc["temperature"]["u_sys_temperature"]
-
-pass
+# ds = xr.open_dataset("obs_example.nc")
+#
+# ds.unc["temperature"]["u_sys_temperature"] = (
+#     ["x", "y", "time"],
+#     ds.temperature * 0.03,
+#     {
+#         "err_corr": [
+#             {
+#                 "dim": "x",
+#                 "form": "new",
+#                 "params": [],
+#             },
+#             {
+#                 "dim": "y",
+#                 "form": "systematic",
+#                 "params": [],
+#             },
+#             {
+#                 "dim": "time",
+#                 "form": "systematic",
+#                 "params": [],
+#             },
+#         ]
+#     },
+# )
+#
+# p = ds.unc["temperature"]["u_sys_temperature"]
+#
+# pass
