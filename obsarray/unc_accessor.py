@@ -291,9 +291,10 @@ class Uncertainty:
         # populate with error-correlation matrices built be each error-correlation
         # parameterisation object
         for dim_err_corr in self.err_corr:
-            err_corr_matrix.values = err_corr_matrix.values.dot(
-                dim_err_corr[1].build_matrix(self._sli)
-            )
+            if np.all([dim in self._obj[self._unc_var_name][self._sli].dims for dim in dim_err_corr[1].dims]):
+                err_corr_matrix.values = err_corr_matrix.values.dot(
+                    dim_err_corr[1].build_matrix(self._sli)
+                )
 
         return err_corr_matrix
 
@@ -563,7 +564,7 @@ class VariableUncertainty:
         )
         covs_sum = np.zeros(total_err_cov_matrix.shape)
         for unc in self:
-            covs_sum += unc.err_cov_matrix().values
+            covs_sum += unc[self._sli].err_cov_matrix().values
 
         total_err_cov_matrix.values = covs_sum
 
@@ -582,7 +583,7 @@ class VariableUncertainty:
 
         covs_sum = np.zeros(structured_err_cov_matrix.shape)
         for unc in self:
-            covs_sum += unc.err_cov_matrix().values
+            covs_sum += unc[self._sli].err_cov_matrix().values
 
         structured_err_cov_matrix.values = covs_sum
 
