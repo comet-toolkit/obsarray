@@ -219,7 +219,7 @@ class Uncertainty:
             if self.units == "%":
                 return self.value / 100 * self.var_value
 
-            elif self.units != self.var_units:
+            elif (self.units != self.var_units) and (self.units is not None):
                 raise ValueError(
                     "Unit mismatch between observation variable and uncertainty variable:\n"
                     "* '{}' - '{}'\n"
@@ -246,7 +246,7 @@ class Uncertainty:
 
         :return: random uncertainty flag
         """
-        if len(self.err_corr)>0:
+        if len(self.err_corr) > 0:
             return all(e[1].is_random is True for e in self.err_corr)
         else:
             return False

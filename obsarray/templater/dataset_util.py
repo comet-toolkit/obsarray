@@ -153,7 +153,7 @@ class DatasetUtil:
         # set undefined dims as random
         defined_err_corr_dims = []
         for erd in err_corr:
-            if isinstance(erd["dim"],str):
+            if isinstance(erd["dim"], str):
                 defined_err_corr_dims.append(erd["dim"])
             else:
                 defined_err_corr_dims.extend(erd["dim"])
@@ -173,7 +173,10 @@ class DatasetUtil:
             units_str = DatasetUtil.return_err_corr_units_str(idx)
 
             form = ecdef["form"]
-            attributes[dim_str] = ecdef["dim"]
+            if isinstance(ecdef["dim"], list) and len(ecdef["dim"]) == 1:
+                attributes[dim_str] = ecdef["dim"]
+            else:
+                attributes[dim_str] = ecdef["dim"]
             attributes[form_str] = ecdef["form"]
             attributes[units_str] = ecdef["units"] if "units" in ecdef else []
 
@@ -383,7 +386,9 @@ class DatasetUtil:
 
         ds = xarray.Dataset()
         for flag_meaning, flag_mask in zip(flag_meanings, flag_masks):
-            ds[flag_meaning] = DatasetUtil.create_variable(list(da.shape), bool, dim_names=list(da.dims))
+            ds[flag_meaning] = DatasetUtil.create_variable(
+                list(da.shape), bool, dim_names=list(da.dims)
+            )
             ds[flag_meaning] = (da & flag_mask).astype(bool)
 
         return ds
@@ -447,7 +452,9 @@ class DatasetUtil:
         set_flags = DatasetUtil.unpack_flags(da)[flag_name]
 
         if numpy.any(set_flags == True) and error_if_set:
-            raise ValueError("Flag " + flag_name + " already set for variable " + da.name)
+            raise ValueError(
+                "Flag " + flag_name + " already set for variable " + da.name
+            )
 
         # Find flag mask
         flag_meanings, flag_masks = DatasetUtil._get_flag_encoding(da)
@@ -473,7 +480,9 @@ class DatasetUtil:
         set_flags = DatasetUtil.unpack_flags(da)[flag_name]
 
         if numpy.any(set_flags == False) and error_if_unset:
-            raise ValueError("Flag " + flag_name + " already set for variable " + da.name)
+            raise ValueError(
+                "Flag " + flag_name + " already set for variable " + da.name
+            )
 
         # Find flag mask
         flag_meanings, flag_masks = DatasetUtil._get_flag_encoding(da)
@@ -501,7 +510,7 @@ class DatasetUtil:
 
         set_flags = []
         for flag_meaning, flag_mask in zip(flag_meanings, flag_masks):
-            if (da & flag_mask):
+            if da & flag_mask:
                 set_flags.append(flag_meaning)
 
         return set_flags

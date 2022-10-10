@@ -648,6 +648,15 @@ class TestUncertainty(unittest.TestCase):
 
         self.assertRaises(ValueError, unitcall, self.ds)
 
+    def test_abs_value_uncnounits(self):
+
+        del self.ds["u_str_temperature"].attrs["units"]
+
+        xr.testing.assert_equal(
+            self.ds.unc["temperature"]["u_str_temperature"].value,
+            self.ds.unc["temperature"]["u_str_temperature"].abs_value,
+        )
+
     def test_pdf_shape(self):
         self.assertEqual(
             self.ds.unc["temperature"]["u_ran_temperature"].pdf_shape, "gaussian"
