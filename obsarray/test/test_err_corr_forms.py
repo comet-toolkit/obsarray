@@ -121,20 +121,35 @@ class TestSystematicUnc(unittest.TestCase):
     def setUp(self) -> None:
         self.ds = create_ds()
 
-    def test_build_matrix_1stdim(self):
+    def build_matrix_1stdim(self):
         rc = SystematicCorrelation(self.ds, "u_sys_temperature", ["x"], [], [])
 
         ecrm = rc.build_matrix((slice(None), slice(None), slice(None)))
+        # np.testing.assert_equal(ecrm, np.ones((12, 12)))
 
-        np.testing.assert_equal(ecrm, np.ones((12, 12)))
+        return ecrm
 
-    def test_build_matrix_2nddim(self):
+    def build_matrix_2nddim(self):
         rc = SystematicCorrelation(self.ds, "u_sys_temperature", ["y"], [], [])
 
         ecrm = rc.build_matrix((slice(None), slice(None), slice(None)))
+        # np.testing.assert_equal(ecrm, np.ones((12, 12)))
 
-        np.testing.assert_equal(ecrm, np.ones((12, 12)))
+        return ecrm
 
+    def build_matrix_3ddim(self):
+        rc = SystematicCorrelation(self.ds, "u_sys_temperature", ["time"], [], [])
+
+        ecrm = rc.build_matrix((slice(None), slice(None), slice(None)))
+        # np.testing.assert_equal(ecrm, np.ones((12, 12)))
+
+        return ecrm
+
+    def test_build_matrix(self):
+        x=self.build_matrix_1stdim()
+        y=self.build_matrix_2nddim()
+        time=self.build_matrix_3ddim()
+        np.testing.assert_equal((x.dot(y)).dot(time), np.ones((12, 12)))
 
 if __name__ == "main":
     unittest.main()

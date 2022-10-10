@@ -31,7 +31,7 @@ def compare_err_corr_form(self, form, exp_form):
     self.assertEqual(form.form, exp_form.form)
     self.assertCountEqual(form.params, exp_form.params)
     self.assertCountEqual(form.units, exp_form.units)
-    self.assertCountEqual(form.unc_var_name, exp_form.unc_var_name)
+    self.assertCountEqual(form._unc_var_name, exp_form._unc_var_name)
 
 
 def create_ds():
@@ -99,7 +99,7 @@ def create_ds():
             "err_corr": [
                 {
                     "dim": "x",
-                    "form": "custom",
+                    "form": "err_corr_matrix",
                     "params": ["err_corr_str_temperature"],
                 },
                 {

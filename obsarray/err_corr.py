@@ -49,7 +49,7 @@ class BaseErrCorrForm(abc.ABC):
 
     def __init__(self, xarray_obj, unc_var_name, dims, params, units):
         self._obj = xarray_obj
-        self.unc_var_name = unc_var_name
+        self._unc_var_name = unc_var_name
         self.dims = dims if isinstance(dims, list) else [dims]
         self.params = params if isinstance(params, list) else [params]
         self.units = units
@@ -69,18 +69,18 @@ class BaseErrCorrForm(abc.ABC):
         """Form name"""
         pass
 
-    def expand_dim_matrix(self, submatrix):
+    def expand_dim_matrix(self, submatrix, sli):
         return expand_errcorr_dims(
             in_corr=submatrix,
             in_dim=self.dims,
-            out_dim=list(self._obj[self.unc_var_name].dims),
+            out_dim=list(self._obj[self._unc_var_name][sli].dims),
             dim_sizes={
-                dim: self._obj.dims[dim] for dim in self._obj[self.unc_var_name].dims
+                dim: self._obj.dims[dim] for dim in self._obj[self._unc_var_name][sli].dims
             },
         )
 
     def slice_full_cov(self, full_matrix, sli):
-        mask_array = np.ones(self._obj[self.unc_var_name].shape, dtype=bool)
+        mask_array = np.ones(self._obj[self._unc_var_name].shape, dtype=bool)
         mask_array[sli] = False
 
         return np.delete(
@@ -138,10 +138,10 @@ class RandomCorrelation(BaseErrCorrForm):
         dims_matrix = np.eye(n_elems)
 
         # expand to correlation matrix over all variable dims
-        full_matrix = self.expand_dim_matrix(dims_matrix)
+        return self.expand_dim_matrix(dims_matrix, sli)
 
-        # subset to slice
-        return self.slice_full_cov(full_matrix, sli)
+        # # subset to slice
+        # return self.slice_full_cov(full_matrix, sli)
 
 
 @register_err_corr_form("systematic")
@@ -167,10 +167,10 @@ class SystematicCorrelation(BaseErrCorrForm):
         dims_matrix = np.ones((n_elems, n_elems))
 
         # expand to correlation matrix over all variable dims
-        full_matrix = self.expand_dim_matrix(dims_matrix)
+        return self.expand_dim_matrix(dims_matrix,sli)
 
         # subset to slice
-        return self.slice_full_cov(full_matrix, sli)
+        # return self.slice_full_cov(full_matrix, sli)
 
 
 @register_err_corr_form("err_corr_matrix")
@@ -189,10 +189,10 @@ class ErrCorrMatrixCorrelation(BaseErrCorrForm):
         """
 
         # expand to correlation matrix over all variable dims
-        full_matrix = self.expand_dim_matrix(self._obj[self.params[0]])
+        return self.expand_dim_matrix(self._obj[self.params[0]],sli)
 
-        # subset to slice
-        return self.slice_full_cov(full_matrix, sli)
+        # # subset to slice
+        # return self.slice_full_cov(full_matrix, sli)
 
 
 @register_err_corr_form("ensemble")

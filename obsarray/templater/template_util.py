@@ -129,7 +129,7 @@ class TemplateUtil:
             )
 
         # Create variable and add to dataset
-        if dtype == str:
+        if isinstance(dtype,str):
             if dtype == "flag":
                 flag_meanings = attributes.pop("flag_meanings")
                 variable = du.create_flags_variable(
