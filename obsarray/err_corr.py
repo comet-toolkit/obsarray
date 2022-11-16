@@ -75,7 +75,8 @@ class BaseErrCorrForm(abc.ABC):
             in_dim=self.dims,
             out_dim=list(self._obj[self._unc_var_name][sli].dims),
             dim_sizes={
-                dim: self._obj.dims[dim] for dim in self._obj[self._unc_var_name][sli].dims
+                dim: self._obj.dims[dim]
+                for dim in self._obj[self._unc_var_name][sli].dims
             },
         )
 
@@ -167,7 +168,7 @@ class SystematicCorrelation(BaseErrCorrForm):
         dims_matrix = np.ones((n_elems, n_elems))
 
         # expand to correlation matrix over all variable dims
-        return self.expand_dim_matrix(dims_matrix,sli)
+        return self.expand_dim_matrix(dims_matrix, sli)
 
         # subset to slice
         # return self.slice_full_cov(full_matrix, sli)
@@ -189,7 +190,7 @@ class ErrCorrMatrixCorrelation(BaseErrCorrForm):
         """
 
         # expand to correlation matrix over all variable dims
-        return self.expand_dim_matrix(self._obj[self.params[0]],sli)
+        return self.expand_dim_matrix(self._obj[self.params[0]], sli)
 
         # # subset to slice
         # return self.slice_full_cov(full_matrix, sli)

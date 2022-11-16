@@ -146,10 +146,11 @@ class TestSystematicUnc(unittest.TestCase):
         return ecrm
 
     def test_build_matrix(self):
-        x=self.build_matrix_1stdim()
-        y=self.build_matrix_2nddim()
-        time=self.build_matrix_3ddim()
+        x = self.build_matrix_1stdim()
+        y = self.build_matrix_2nddim()
+        time = self.build_matrix_3ddim()
         np.testing.assert_equal((x.dot(y)).dot(time), np.ones((12, 12)))
+
 
 if __name__ == "main":
     unittest.main()

@@ -74,7 +74,13 @@ class DSWriter:
             var_encoding = dict(comp)
             var_encoding.update(ds[var_name].encoding)
             if "dtype" in var_encoding.keys():
-                var_encoding.update({"_FillValue": DatasetUtil.get_default_fill_value(var_encoding["dtype"])})
+                var_encoding.update(
+                    {
+                        "_FillValue": DatasetUtil.get_default_fill_value(
+                            var_encoding["dtype"]
+                        )
+                    }
+                )
                 ds[var_name].attrs.pop("_FillValue")
             encoding.update({var_name: var_encoding})
 
