@@ -276,6 +276,47 @@ class Uncertainty:
 
         return all(e[1].is_systematic is True for e in self.err_corr)
 
+    def err_corr_dict(self) -> dict:
+        """
+        Error-correlation dictionary for uncertainty effect.
+
+        :return: dictionary with error-correlation for each dimension
+        """
+
+        # initialise error-correlation dictionary
+        err_corr_dict = {}
+
+        # populate with error-correlation matrices built be each error-correlation
+        # parameterisation object
+        for dim_err_corr in self.err_corr:
+            if np.all([dim in self._obj[self._unc_var_name][self._sli].dims for dim in dim_err_corr[1].dims]):
+                if dim_err_corr[1].form in ["random","systematic"]:
+                    err_corr_dict[dim_err_corr[0]]=dim_err_corr[1].form
+
+                elif dim_err_corr[1].form == "err_corr_matrix":
+                    err_corr_dict[dim_err_corr[0]]=self._obj[dim_err_corr[1].params[0]].values
+
+                else:
+                    raise NotImplementedError("this correlation form is not implemented for err_corr_dict()")
+        return err_corr_dict
+
+    def err_corr_dict_numdim(self) -> dict:
+        """
+        Error-correlation dictionary for uncertainty effect, where the keys are the dimension index rather than dimension name.
+
+        :return: dictionary with error-correlation for each dimension
+        """
+        # initialise error-correlation dictionary
+        err_corr_dict = self.err_corr_dict()
+        err_corr_dict_numdim = {}
+
+        for idim,dim in enumerate(self._obj.dims):
+            if dim in err_corr_dict.keys():
+                err_corr_dict_numdim[str(idim)]=err_corr_dict[dim]
+
+        return err_corr_dict_numdim
+
+
     def err_corr_matrix(self) -> xr.DataArray:
         """
         Error-correlation matrix for uncertainty effect.
