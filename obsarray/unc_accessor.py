@@ -637,7 +637,8 @@ class VariableUncertainty:
 
         covs_sum = np.zeros(structured_err_cov_matrix.shape)
         for unc in self:
-            covs_sum += unc[self._sli].err_cov_matrix().values
+            if unc.is_structured:
+                covs_sum += unc[self._sli].err_cov_matrix().values
 
         structured_err_cov_matrix.values = covs_sum
 
