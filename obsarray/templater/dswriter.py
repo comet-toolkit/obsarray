@@ -3,7 +3,7 @@ DSWriter class
 """
 
 import os
-
+from obsarray.templater.template_util import DatasetUtil
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
 
@@ -73,6 +73,15 @@ class DSWriter:
         for var_name in ds.data_vars:
             var_encoding = dict(comp)
             var_encoding.update(ds[var_name].encoding)
+            if "dtype" in var_encoding.keys():
+                var_encoding.update(
+                    {
+                        "_FillValue": DatasetUtil.get_default_fill_value(
+                            var_encoding["dtype"]
+                        )
+                    }
+                )
+                ds[var_name].attrs.pop("_FillValue")
             encoding.update({var_name: var_encoding})
 
         ds.to_netcdf(path, format="netCDF4", engine="netcdf4", encoding=encoding)
