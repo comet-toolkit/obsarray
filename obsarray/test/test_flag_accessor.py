@@ -4,6 +4,7 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 import unittest
+from unittest.mock import patch
 import obsarray
 
 
@@ -137,6 +138,31 @@ class TestFlagVariable(unittest.TestCase):
             self.ds.flag["temperature_flags"].keys(),
             ["bad_data", "dubious data"],
         )
+
+
+class TestFlag(unittest.TestCase):
+    def setUp(self):
+        self.ds = create_ds()
+
+    @patch("obsarray.flag_accessor.Flag.expand_sli", return_value="slice")
+    def test___getitem__(self, m):
+        self.assertEqual(
+            self.ds.flag["temperature_flags"]["bad_data"]["in_slice"]._sli, "slice"
+        )
+
+        m.assert_called_with("in_slice")
+
+    def test_expand_slice_full(self):
+        sli = self.ds.flag["temperature_flags"]["bad_data"].expand_sli((1, 1, 1))
+        self.assertEqual((1, 1, 1), sli)
+
+    def test_expand_slice_None(self):
+        sli = self.ds.flag["temperature_flags"]["bad_data"].expand_sli()
+        self.assertEqual((slice(None), slice(None), slice(None)), sli)
+
+    def test_expand_slice_first(self):
+        sli = self.ds.flag["temperature_flags"]["bad_data"].expand_sli((0,))
+        self.assertEqual((0, slice(None), slice(None)), sli)
 
 
 if __name__ == "__main__":

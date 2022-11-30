@@ -1,7 +1,7 @@
 """unc_accessor - xarray extensions with accessor objects for uncertainty handling"""
 
 import xarray as xr
-from typing import List
+from typing import List, Optional
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
@@ -30,6 +30,61 @@ class Flag:
         self._flag_var_name = flag_var_name
         self._flag_meaning = flag_meaning
         self._sli = tuple([slice(None)] * self._obj[self._flag_var_name].ndim)
+
+    def __str__(self):
+        """Custom __str__"""
+        return "<{}> \n{}".format(
+            self.__class__.__name__,
+            self.value.__repr__()[18:],
+        )
+
+    def __repr__(self):
+        """Custom  __repr__"""
+        return str(self)
+
+    def __getitem__(self, sli: tuple):
+        """
+        Defines variable slice
+
+        :param sli: slice of variable
+        :return: self
+        """
+
+        # update slice
+        self._sli = self.expand_sli(sli)
+
+        return self
+
+    def expand_sli(self, sli: Optional[tuple] = None) -> tuple:
+        """
+        Function to expand the provided sli so that it always has the right number of dimensions
+
+        :param sli: input sli tuple. This one can have fewer dimensions than the total if e.g. only providing the first index
+        :return: output sli tuple
+        """
+
+        # if no slice provided, define as slice for full array
+        if sli is None:
+            out_sli = tuple([slice(None)] * self._obj[self._flag_var_name].ndim)
+
+        else:
+            out_sli = list([slice(None)] * self._obj[self._flag_var_name].ndim)
+            sli_list = list(sli)
+            for i in range(len(sli_list)):
+                if not sli_list[i] == ":":
+                    out_sli[i] = sli_list[i]
+            out_sli = tuple(out_sli)
+
+        return out_sli
+
+    @property
+    def value(self) -> xr.DataArray:
+        """
+        Return flag variable flag value
+
+        :return: flag variable flag value
+        """
+        raise NotImplementedError
 
 
 class FlagVariable:
