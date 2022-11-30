@@ -1,4 +1,4 @@
-"""unc_accessor - xarray extensions with accessor objects for uncertainty handling"""
+"""flag_accessor - xarray extensions with accessor objects for flag handling"""
 
 import xarray as xr
 from typing import List, Optional
@@ -125,9 +125,9 @@ class FlagVariable:
 
     def __len__(self) -> int:
         """
-        Returns number of variable uncertainties
+        Returns number of flag variable flags
 
-        :returns: number of variable uncertainties
+        :returns: number of flag variable flags
         """
         return len(self.keys())
 
@@ -139,12 +139,12 @@ class FlagVariable:
 
     def __next__(self) -> Flag:
         """
-        Returns ith variable uncertainty
+        Returns ith flag in flag variable
 
-        :return: uncertainty variable
+        :return: flag variable flag
         """
 
-        # Iterate through uncertainty comp
+        # Iterate through flag variable flags
         if self.i < len(self.keys()):
             self.i += 1  # Update counter
             return self[self.keys()[self.i - 1]]
@@ -154,9 +154,9 @@ class FlagVariable:
 
     def keys(self) -> List[str]:
         """
-        Returns uncertainty variable names
+        Returns flag variable flag names
 
-        :return: uncertainty variable names
+        :return: flag variable flag names
         """
         return self._obj[self._flag_var_name].attrs["flag_meanings"]
 
@@ -173,6 +173,16 @@ class FlagAccessor(object):
 
         # Initialise attributes
         self._obj = xarray_obj
+
+    def __str__(self) -> str:
+        """Custom __str__"""
+
+        string = "<{}>\nDataset Flags:\n".format(self.__class__.__name__)
+
+        for var_name in self.keys():
+            string += "* {}\n".format(self[var_name].__repr__())
+
+        return string
 
     def __repr__(self) -> str:
         """Custom  __repr__"""
@@ -200,28 +210,14 @@ class FlagAccessor(object):
         self.i = 0  # Define counter
         return self
 
-    def __str__(self) -> str:
-        """Custom __str__"""
-
-        string = "<{}>\nDataset Flags:\n".format(self.__class__.__name__)
-
-        for var_name in self.keys():
-            string += "* {}\n".format(self[var_name].__repr__())
-
-        return string
-
-    def __repr__(self) -> str:
-        """Custom  __repr__"""
-        return str(self)
-
     def __next__(self):
         """
-        Returns ith data variable
+        Returns ith flag variable
 
-        :return: ith data variable
+        :return: ith flag variable
         """
 
-        # Iterate through obs variables
+        # Iterate through flag variables
         if self.i < len(self.keys()):
             self.i += 1  # Update counter
             return self[self.keys()[self.i - 1]]
@@ -231,9 +227,9 @@ class FlagAccessor(object):
 
     def keys(self):
         """
-        Returns data variable names (i.e., non-flag variables)
+        Returns flag variable names
 
-        :return: data variable names
+        :return: flag variable names
         """
 
         return list(self._obj.flag.flag_vars.keys())
@@ -267,9 +263,9 @@ class FlagAccessor(object):
 
     def _is_data_var(self, var_name: str) -> bool:
         """
-        Returns true if named dataset variable is an observation variable
+        Returns true if named dataset variable is an data variable (i.e. not a flag variable)
 
-        :return: observation variable flag
+        :return: data variable bool
         """
 
         if not self._is_flag_var(var_name):
@@ -278,63 +274,14 @@ class FlagAccessor(object):
 
     def _is_flag_var(self, var_name: str) -> bool:
         """
-        Returns true if named dataset variable is an uncertainty variable
+        Returns true if named dataset variable is an flag variable
 
-        :return: uncertainty variable flag
+        :return: flag variable bool
         """
 
         if "flag_meanings" in self._obj[var_name].attrs:
             return True
         return False
-
-    def __str__(self):
-        """Custom __str__"""
-        return "<{}>\nVariable Uncertainties: '{}'\n{}".format(
-            self.__class__.__name__,
-            self._var_name,
-            self._obj.unc._var_unc_vars(self._var_name).__repr__(),
-        )
-
-    def __repr__(self):
-        """Custom  __repr__"""
-        return str(self)
-
-    def __len__(self) -> int:
-        """
-        Returns number of variable uncertainties
-
-        :returns: number of variable uncertainties
-        """
-        return len(self._obj.unc._var_unc_var_names(self._var_name))
-
-    def __iter__(self):
-        """Custom  __iter__"""
-
-        self.i = 0  # Define counter
-        return self
-
-    def __next__(self) -> Flag:
-        """
-        Returns ith variable uncertainty
-
-        :return: uncertainty variable
-        """
-
-        # Iterate through uncertainty comp
-        if self.i < len(self.keys()):
-            self.i += 1  # Update counter
-            return self[self.keys()[self.i - 1]]
-
-        else:
-            raise StopIteration
-
-    def keys(self) -> List[str]:
-        """
-        Returns uncertainty variable names
-
-        :return: uncertainty variable names
-        """
-        return self._obj.unc._var_unc_var_names(self._var_name)
 
 
 if __name__ == "__main__":
