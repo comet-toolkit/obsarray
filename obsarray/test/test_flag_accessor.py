@@ -22,9 +22,16 @@ def create_ds():
     ds = xr.Dataset(
         data_vars=dict(
             temperature=(["x", "y", "time"], temperature, {"units": "K"}),
+            pressure=(["x", "y", "time"], temperature, {"units": "K"}),
+            general_flags=(
+                ["x", "y", "time"],
+                np.zeros(temperature.shape, dtype=np.int8),
+                {"flag_meanings": []},
+            ),
             temperature_flags=(
                 ["x", "y", "time"],
                 np.zeros(temperature.shape, dtype=np.int8),
+                {"flag_meanings": [], "applicable_vars": ["temperature"]},
             ),
         ),
         coords=dict(
@@ -43,8 +50,53 @@ class TestFlagAccessor(unittest.TestCase):
     def setUp(self):
         self.ds = create_ds()
 
-    def test_method(self):
-        pass
+    def test___getitem__(self):
+        self.assertIsInstance(
+            self.ds.flag["general_flag"], obsarray.flag_accessor.FlagVariable
+        )
+        self.assertEqual(self.ds.flag["general_flag"]._flag_var_name, "general_flag")
+
+    def test___len__(self):
+        self.assertEqual(len(self.ds.flag), 2)
+
+    def test___iter__(self):
+
+        var_names = []
+        for flag in self.ds.flag:
+            self.assertIsInstance(flag, obsarray.flag_accessor.FlagVariable)
+            var_names.append(flag._flag_var_name)
+
+        self.assertCountEqual(var_names, ["temperature_flags", "general_flags"])
+
+    def test_keys(self):
+        self.assertCountEqual(
+            self.ds.flag.keys(), ["temperature_flags", "general_flags"]
+        )
+
+    def test__is_data_var_true(self):
+        self.assertTrue(self.ds.flag._is_data_var("temperature"))
+
+    def test__is_data_var_false(self):
+        self.assertFalse(self.ds.flag._is_data_var("temperature_flags"))
+
+    def test_data_vars(self):
+        data_vars = self.ds.flag.data_vars
+        self.assertEqual(type(data_vars), xr.core.dataset.DataVariables)
+        self.assertCountEqual(list(data_vars.variables), ["temperature", "pressure"])
+
+    def test_flag_vars(self):
+        flag_vars = self.ds.flag.flag_vars
+        self.assertEqual(type(flag_vars), xr.core.dataset.DataVariables)
+        self.assertCountEqual(
+            list(flag_vars.variables),
+            ["temperature_flags", "general_flags"],
+        )
+
+    def test__is_flag_var_true(self):
+        self.assertTrue(self.ds.flag._is_flag_var("temperature_flags"))
+
+    def test__is_flag_var_false(self):
+        self.assertFalse(self.ds.flag._is_flag_var("temperature"))
 
 
 if __name__ == "__main__":
