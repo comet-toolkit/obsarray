@@ -31,7 +31,10 @@ def create_ds():
             temperature_flags=(
                 ["x", "y", "time"],
                 np.zeros(temperature.shape, dtype=np.int8),
-                {"flag_meanings": [], "applicable_vars": ["temperature"]},
+                {
+                    "flag_meanings": ["bad_data", "dubious data"],
+                    "applicable_vars": ["temperature"],
+                },
             ),
         ),
         coords=dict(
@@ -97,6 +100,43 @@ class TestFlagAccessor(unittest.TestCase):
 
     def test__is_flag_var_false(self):
         self.assertFalse(self.ds.flag._is_flag_var("temperature"))
+
+
+class TestFlagVariable(unittest.TestCase):
+    def setUp(self):
+        self.ds = create_ds()
+
+    def test___getitem__(self):
+        self.assertIsInstance(
+            self.ds.flag["temperature_flags"]["bad_data"],
+            obsarray.flag_accessor.Flag,
+        )
+        self.assertEqual(
+            self.ds.flag["temperature_flags"]["bad_data"]._flag_var_name,
+            "temperature_flags",
+        )
+        self.assertEqual(
+            self.ds.flag["temperature_flags"]["bad_data"]._flag_meaning,
+            "bad_data",
+        )
+
+    def test___len__(self):
+        self.assertEqual(len(self.ds.flag["temperature_flags"]), 2)
+
+    def test___iter__(self):
+
+        var_names = []
+        for flag in self.ds.flag["temperature_flags"]:
+            self.assertIsInstance(flag, obsarray.flag_accessor.Flag)
+            var_names.append(flag._flag_meaning)
+
+        self.assertCountEqual(var_names, ["bad_data", "dubious data"])
+
+    def test_keys(self):
+        self.assertCountEqual(
+            self.ds.flag["temperature_flags"].keys(),
+            ["bad_data", "dubious data"],
+        )
 
 
 if __name__ == "__main__":

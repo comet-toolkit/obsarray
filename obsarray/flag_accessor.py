@@ -1,10 +1,35 @@
 """unc_accessor - xarray extensions with accessor objects for uncertainty handling"""
 
 import xarray as xr
+from typing import List
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
 __all__ = []
+
+
+class Flag:
+    """
+    Interface for handling ``xarray.Dataset`` flag variable flags
+
+    :param xarray_obj: dataset
+    :param flag_var_name: name of flag variable
+    :param flag_meaning: specific flag from flag variable
+    """
+
+    def __init__(
+        self,
+        xarray_obj: xr.Dataset,
+        flag_var_name: str,
+        flag_meaning: str,
+    ):
+
+        # initialise attributes
+
+        self._obj = xarray_obj
+        self._flag_var_name = flag_var_name
+        self._flag_meaning = flag_meaning
+        self._sli = tuple([slice(None)] * self._obj[self._flag_var_name].ndim)
 
 
 class FlagVariable:
@@ -20,6 +45,65 @@ class FlagVariable:
         # Initialise attributes
         self._obj = xarray_obj
         self._flag_var_name = flag_var_name
+
+    def __getitem__(self, key: str) -> "Flag":
+        """
+        Returns flag variable flag interface
+
+        :param key: flag meaning
+        :return: flag interface
+        """
+
+        return Flag(self._obj, self._flag_var_name, key)
+
+    def __str__(self):
+        """Custom __str__"""
+        return "<{}>\nFlagVariable: '{}'\n{}".format(
+            self.__class__.__name__,
+            self._flag_var_name,
+            self.keys().__repr__(),
+        )
+
+    def __repr__(self):
+        """Custom  __repr__"""
+        return str(self)
+
+    def __len__(self) -> int:
+        """
+        Returns number of variable uncertainties
+
+        :returns: number of variable uncertainties
+        """
+        return len(self.keys())
+
+    def __iter__(self):
+        """Custom  __iter__"""
+
+        self.i = 0  # Define counter
+        return self
+
+    def __next__(self) -> Flag:
+        """
+        Returns ith variable uncertainty
+
+        :return: uncertainty variable
+        """
+
+        # Iterate through uncertainty comp
+        if self.i < len(self.keys()):
+            self.i += 1  # Update counter
+            return self[self.keys()[self.i - 1]]
+
+        else:
+            raise StopIteration
+
+    def keys(self) -> List[str]:
+        """
+        Returns uncertainty variable names
+
+        :return: uncertainty variable names
+        """
+        return self._obj[self._flag_var_name].attrs["flag_meanings"]
 
 
 @xr.register_dataset_accessor("flag")
@@ -147,6 +231,55 @@ class FlagAccessor(object):
         if "flag_meanings" in self._obj[var_name].attrs:
             return True
         return False
+
+    def __str__(self):
+        """Custom __str__"""
+        return "<{}>\nVariable Uncertainties: '{}'\n{}".format(
+            self.__class__.__name__,
+            self._var_name,
+            self._obj.unc._var_unc_vars(self._var_name).__repr__(),
+        )
+
+    def __repr__(self):
+        """Custom  __repr__"""
+        return str(self)
+
+    def __len__(self) -> int:
+        """
+        Returns number of variable uncertainties
+
+        :returns: number of variable uncertainties
+        """
+        return len(self._obj.unc._var_unc_var_names(self._var_name))
+
+    def __iter__(self):
+        """Custom  __iter__"""
+
+        self.i = 0  # Define counter
+        return self
+
+    def __next__(self) -> Flag:
+        """
+        Returns ith variable uncertainty
+
+        :return: uncertainty variable
+        """
+
+        # Iterate through uncertainty comp
+        if self.i < len(self.keys()):
+            self.i += 1  # Update counter
+            return self[self.keys()[self.i - 1]]
+
+        else:
+            raise StopIteration
+
+    def keys(self) -> List[str]:
+        """
+        Returns uncertainty variable names
+
+        :return: uncertainty variable names
+        """
+        return self._obj.unc._var_unc_var_names(self._var_name)
 
 
 if __name__ == "__main__":
