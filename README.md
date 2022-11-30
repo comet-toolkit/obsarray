@@ -1,5 +1,9 @@
 # obsarray: Measurement uncertainty handling in Python
 
+[![Build Status](https://app.travis-ci.com/comet-toolkit/obsarray.svg?branch=main)](https://app.travis-ci.com/comet-toolkit/obsarray)
+[![codecov](https://codecov.io/gh/comet-toolkit/obsarray/branch/main/graph/badge.svg?token=PZTGG03VQY)](https://codecov.io/gh/comet-toolkit/obsarray)
+[![Documentation Status](https://readthedocs.org/projects/obsarray/badge/?version=latest)](https://obsarray.readthedocs.io/en/latest/?badge=latest)
+
 **obsarray** is an extension to [xarray](https://docs.xarray.dev/en/stable/) for defining, storing and interfacing with uncertainty information using standardised metadata. It is particularly designed to work well with [netCDF](https://www.unidata.ucar.edu/software/netcdf/) files and for the Earth Observation community.
 
 obsarray is part of the [CoMet Toolkit](https://www.comet-toolkit.org) (community metrology toolkit), and can combined with the [punpy](https://punpy.readthedocs.io/en/latest/) (propagating uncertainties in python) module for very simple propagation of defined data uncertainties through arbitrary python functions.
