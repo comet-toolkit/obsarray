@@ -1,0 +1,20 @@
+name: obsarray
+channels:
+  - conda-forge
+  - defaults
+  - coecms
+dependencies:
+  - python=3.9*
+  #
+  # dependencies (in alphabetical order)
+  #
+  - numpy
+  - pip
+  - xarray
+  - pip:
+      - comet_maths
+  #
+  # for testing only
+  #
+  - pytest >=5.4.1
+  - pytest-cov >=2.8.1
