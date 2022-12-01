@@ -23,7 +23,7 @@ def create_ds():
     ds = xr.Dataset(
         data_vars=dict(
             temperature=(["x", "y", "time"], temperature, {"units": "K"}),
-            pressure=(["x", "y", "time"], temperature, {"units": "K"}),
+            precipitation=(["x", "y", "time"], temperature, {"units": "K"}),
             general_flags=(
                 ["x", "y", "time"],
                 np.zeros(temperature.shape, dtype=np.int8),
@@ -86,7 +86,9 @@ class TestFlagAccessor(unittest.TestCase):
     def test_data_vars(self):
         data_vars = self.ds.flag.data_vars
         self.assertEqual(type(data_vars), xr.core.dataset.DataVariables)
-        self.assertCountEqual(list(data_vars.variables), ["temperature", "pressure"])
+        self.assertCountEqual(
+            list(data_vars.variables), ["temperature", "precipitation"]
+        )
 
     def test_flag_vars(self):
         flag_vars = self.ds.flag.flag_vars
@@ -101,6 +103,38 @@ class TestFlagAccessor(unittest.TestCase):
 
     def test__is_flag_var_false(self):
         self.assertFalse(self.ds.flag._is_flag_var("temperature"))
+
+    def test__add_unc_var_DataArray(self):
+        new_flag = xr.DataArray(
+            np.zeros(self.ds.precipitation.shape), dims=["x", "y", "time"]
+        )
+
+        self.ds.flag["new_flag"] = new_flag
+
+        self.assertTrue("flag_meanings" in self.ds.new_flag.attrs)
+
+        np.testing.assert_array_equal(new_flag.values, self.ds.new_flag.values)
+
+    @patch("obsarray.flag_accessor.create_var")
+    def test__add_flag_var_tuple(self, mock):
+
+        flag_def = (
+            ["x", "y", "time"],
+            {"flag_meanings": ["flag1", "flag2", "flag3"]},
+        )
+        self.ds.flag["new_flag"] = flag_def
+
+        mock.assert_called_once_with(
+            "new_flag",
+            {
+                "dtype": "flag",
+                "dim": ["x", "y", "time"],
+                "attributes": {"flag_meanings": ["flag1", "flag2", "flag3"]},
+            },
+            {"x": 2, "y": 2, "time": 3},
+        )
+
+        self.assertTrue(("new_flag" in self.ds))
 
 
 class TestFlagVariable(unittest.TestCase):

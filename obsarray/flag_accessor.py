@@ -1,7 +1,9 @@
 """flag_accessor - xarray extensions with accessor objects for flag handling"""
 
+import numpy as np
 import xarray as xr
-from typing import List, Optional
+from typing import List, Optional, Union, Tuple
+from obsarray.templater.template_util import create_var
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
@@ -188,9 +190,49 @@ class FlagAccessor(object):
         """Custom  __repr__"""
         return str(self)
 
-    def __getitem__(self, var_name: str) -> FlagVariable:
+    def __getitem__(self, flag_var_name: str) -> FlagVariable:
         """Custom  __repr__"""
-        return FlagVariable(self._obj, var_name)
+        return FlagVariable(self._obj, flag_var_name)
+
+    def __setitem__(
+        self,
+        flag_var_name: str,
+        flag_def: Union[xr.DataArray, xr.Variable, Tuple[List[str], dict]],
+    ):
+        """
+        Adds defined flag variable to dataset
+
+        :param flag_var_name: flag variable name
+        :param flag_def: either xarray DataArray/Variable, or definition through tuple as ``(dims, [, attrs])``. ``dims`` is a list of variable dimension names, and ``attrs`` is a dictionary of variable attributes. ``attrs`` should include an element ``flag_meanings`` which is a list defining the flag variable flags.
+        """
+
+        # add uncertainty variable
+        if type(flag_def) == xr.DataArray:
+
+            if "flag_meanings" not in flag_def.attrs:
+                flag_def.attrs["flag_meanings"] = []
+
+            self._obj[flag_var_name] = flag_def
+
+        # use templater functionality if var defined with tuple
+        elif type(flag_def) == tuple:
+
+            attrs = flag_def[1]
+
+            if "flag_meanings" not in attrs:
+                attrs["flag_meanings"] = []
+
+            var_attrs = {
+                "dtype": "flag",
+                "dim": flag_def[0],
+                "attributes": attrs,
+            }
+
+            size = {d: len(self._obj[d]) for d in flag_def[0]}
+
+            var = create_var(flag_var_name, var_attrs, size)
+
+            self._obj[flag_var_name] = var
 
     def __len__(self):
         """
