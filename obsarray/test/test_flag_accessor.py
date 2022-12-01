@@ -155,6 +155,26 @@ class TestFlagVariable(unittest.TestCase):
             "bad_data",
         )
 
+    @patch("obsarray.flag_accessor.Flag.__setitem__")
+    def test___setitem__existing_mask(self, m):
+        self.ds.flag["temperature_flags"]["bad_data"] = True
+
+        m.assert_called_with(slice(None, None, None), True)
+
+    @patch("obsarray.flag_accessor.Flag.__setitem__")
+    def test___setitem__new_mask(self, m):
+        self.ds.flag["temperature_flags"]["test_flag"] = True
+        self.assertEqual(
+            self.ds["temperature_flags"].attrs["flag_meanings"][-1], "test_flag"
+        )
+        m.assert_called_with(slice(None, None, None), True)
+
+    def test___setitem__new_mask_full(self):
+        self.ds["temperature_flags"].attrs["flag_meanings"] = ["test"] * 8
+        self.assertRaises(
+            ValueError, self.ds.flag["temperature_flags"].__setitem__, "test_flag", True
+        )
+
     def test___len__(self):
         self.assertEqual(len(self.ds.flag["temperature_flags"]), 2)
 

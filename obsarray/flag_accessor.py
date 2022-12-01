@@ -57,6 +57,16 @@ class Flag:
 
         return self
 
+    def __setitem__(self, sli: tuple, flag_value):
+        """
+        Sets flag values
+
+        :param sli: slice of variable
+        :param flag_value: flag value as a single value boolean to apply to all data or boolean mask array
+        """
+
+        raise NotImplementedError
+
     def expand_sli(self, sli: Optional[tuple] = None) -> tuple:
         """
         Function to expand the provided sli so that it always has the right number of dimensions
@@ -112,6 +122,35 @@ class FlagVariable:
         """
 
         return Flag(self._obj, self._flag_var_name, key)
+
+    def __setitem__(self, flag_meaning: str, flag_value: Union[bool, np.ndarray]):
+        """
+        Sets defined flag variable flag, if flag is:
+
+        * an existing flag (i.e., in variable ``flag_meanings`` list), sets data for that flag
+        * not an existing flag variable, that flag is added to ``flag_meanings`` and has its data set. Note this fails if max number of flags for flag variable dtype already defined (e.g. 8 flags defined for ``int8`` variable)
+
+        :param flag_meaning: flag meaning name
+        :param flag_value: flag value as a single value boolean to apply to all data or boolean mask array
+        """
+
+        if flag_meaning not in self._obj[self._flag_var_name].attrs["flag_meanings"]:
+
+            # check if variable can accommodate extra flag
+            n_flags = len(self._obj[self._flag_var_name].attrs["flag_meanings"])
+            n_bits = self._obj[self._flag_var_name].dtype.itemsize
+            if n_flags >= n_bits:
+                raise ValueError(
+                    "cannot assign "
+                    + str(n_flags + 1)
+                    + " to variable with "
+                    + str(n_bits)
+                    + " bits"
+                )
+
+            self._obj[self._flag_var_name].attrs["flag_meanings"].append(flag_meaning)
+
+        self[flag_meaning][:] = flag_value
 
     def __str__(self):
         """Custom __str__"""
