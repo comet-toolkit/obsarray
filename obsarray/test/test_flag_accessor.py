@@ -104,7 +104,7 @@ class TestFlagAccessor(unittest.TestCase):
     def test__is_flag_var_false(self):
         self.assertFalse(self.ds.flag._is_flag_var("temperature"))
 
-    def test__add_unc_var_DataArray(self):
+    def test___setitem___DataArray(self):
         new_flag = xr.DataArray(
             np.zeros(self.ds.precipitation.shape), dims=["x", "y", "time"]
         )
@@ -116,7 +116,7 @@ class TestFlagAccessor(unittest.TestCase):
         np.testing.assert_array_equal(new_flag.values, self.ds.new_flag.values)
 
     @patch("obsarray.flag_accessor.create_var")
-    def test__add_flag_var_tuple(self, mock):
+    def test___setitem___tuple(self, mock):
 
         flag_def = (
             ["x", "y", "time"],
@@ -156,20 +156,20 @@ class TestFlagVariable(unittest.TestCase):
         )
 
     @patch("obsarray.flag_accessor.Flag.__setitem__")
-    def test___setitem__existing_mask(self, m):
+    def test___setitem___existing_mask(self, m):
         self.ds.flag["temperature_flags"]["bad_data"] = True
 
         m.assert_called_with(slice(None, None, None), True)
 
     @patch("obsarray.flag_accessor.Flag.__setitem__")
-    def test___setitem__new_mask(self, m):
+    def test___setitem___new_mask(self, m):
         self.ds.flag["temperature_flags"]["test_flag"] = True
         self.assertEqual(
             self.ds["temperature_flags"].attrs["flag_meanings"][-1], "test_flag"
         )
         m.assert_called_with(slice(None, None, None), True)
 
-    def test___setitem__new_mask_full(self):
+    def test___setitem___new_mask_full(self):
         self.ds["temperature_flags"].attrs["flag_meanings"] = ["test"] * 8
         self.assertRaises(
             ValueError, self.ds.flag["temperature_flags"].__setitem__, "test_flag", True
@@ -217,6 +217,9 @@ class TestFlag(unittest.TestCase):
     def test_expand_slice_first(self):
         sli = self.ds.flag["temperature_flags"]["bad_data"].expand_sli((0,))
         self.assertEqual((0, slice(None), slice(None)), sli)
+
+    def test__setitem__(self):
+        pass
 
 
 if __name__ == "__main__":
