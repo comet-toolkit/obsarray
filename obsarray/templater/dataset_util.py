@@ -260,14 +260,32 @@ class DatasetUtil:
         )
 
         # add flag attributes
-        variable.attrs["flag_meanings"] = (
-            str(meanings)[1:-1].replace("'", "").replace(",", "")
-        )
-        variable.attrs["flag_masks"] = str([2 ** i for i in range(0, n_masks)])[1:-1]
+        variable.attrs.update(DatasetUtil.return_flag_attrs(meanings))
 
         # todo - make sure flags can't have units
 
         return variable
+
+    @staticmethod
+    def return_flag_attrs(flag_meanings: List[str]) -> dict:
+        """
+        Derive flag related dataset attributes
+
+        :param flag_meanings: flag meanings
+        :return: set of derived flag related attributes
+        """
+
+        n_masks = len(flag_meanings)
+
+        flag_attrs = dict()
+
+        flag_attrs["flag_meanings"] = (
+            str(flag_meanings)[1:-1].replace("'", "").replace(",", "")
+        )
+
+        flag_attrs["flag_masks"] = str([2 ** i for i in range(0, n_masks)])[1:-1]
+
+        return flag_attrs
 
     @staticmethod
     def return_flags_dtype(n_masks: int) -> numpy.typecodes:
