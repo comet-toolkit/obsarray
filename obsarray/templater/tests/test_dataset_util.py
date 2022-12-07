@@ -344,11 +344,44 @@ class TestDatasetUtil(unittest.TestCase):
         data_type = DatasetUtil.return_flags_dtype(32)
         self.assertEqual(data_type, np.uint32)
 
-    def test_return_flag_attrs(self):
-        test_flag_attrs = DatasetUtil.return_flag_attrs(["f1", "f2", "f3", "f4"])
+    def test_pack_flag_attrs(self):
+        test_flag_attrs = DatasetUtil.pack_flag_attrs(["f1", "f2", "f3", "f4"])
         exp_flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": "1, 2, 4, 8"}
 
         self.assertDictEqual(test_flag_attrs, exp_flag_attrs)
+
+    def test_unpack_flag_attrs(self):
+        flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": "1, 2, 4, 8"}
+
+        exp_flag_meanings = ["f1", "f2", "f3", "f4"]
+        exp_flag_masks = [1, 2, 4, 8]
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_attrs)
+
+        self.assertCountEqual(flag_meanings, exp_flag_meanings)
+        self.assertCountEqual(flag_masks, exp_flag_masks)
+
+    def test_unpack_flag_attrs_emptyflags(self):
+        flag_attrs = {"flag_meanings": "", "flag_masks": ""}
+
+        exp_flag_meanings = []
+        exp_flag_masks = []
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_attrs)
+
+        self.assertCountEqual(flag_meanings, exp_flag_meanings)
+        self.assertCountEqual(flag_masks, exp_flag_masks)
+
+    def test_unpack_flag_attrs_noflagattrs(self):
+        flag_attrs = {}
+
+        exp_flag_meanings = []
+        exp_flag_masks = []
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_attrs)
+
+        self.assertCountEqual(flag_meanings, exp_flag_meanings)
+        self.assertCountEqual(flag_masks, exp_flag_masks)
 
     def test_add_encoding(self):
         vector_variable = DatasetUtil.create_variable([5], np.int8)

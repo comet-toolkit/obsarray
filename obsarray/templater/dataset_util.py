@@ -5,7 +5,7 @@ Utilities for creating xarray dataset variables in specified forms
 import string
 import xarray
 import numpy
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional, List, Dict, Tuple
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
@@ -260,14 +260,14 @@ class DatasetUtil:
         )
 
         # add flag attributes
-        variable.attrs.update(DatasetUtil.return_flag_attrs(meanings))
+        variable.attrs.update(DatasetUtil.pack_flag_attrs(meanings))
 
         # todo - make sure flags can't have units
 
         return variable
 
     @staticmethod
-    def return_flag_attrs(flag_meanings: List[str]) -> dict:
+    def pack_flag_attrs(flag_meanings: List[str]) -> dict:
         """
         Derive flag related dataset attributes
 
@@ -286,6 +286,23 @@ class DatasetUtil:
         flag_attrs["flag_masks"] = str([2 ** i for i in range(0, n_masks)])[1:-1]
 
         return flag_attrs
+
+    @staticmethod
+    def unpack_flag_attrs(attrs: dict) -> Tuple[list, list]:
+        """
+        Extract flag related metadata from dataset attributes
+
+        :param attrs: flag variable attributes
+        :return: flag meanings, flag masks lists
+        """
+
+        flag_meanings = (
+            attrs["flag_meanings"].split() if "flag_meanings" in attrs else []
+        )
+        flag_mask = attrs["flag_masks"].split(",") if "flag_masks" in attrs else []
+        flag_mask = [int(m) for m in flag_mask] if flag_mask != [""] else []
+
+        return flag_meanings, flag_mask
 
     @staticmethod
     def return_flags_dtype(n_masks: int) -> numpy.typecodes:
