@@ -383,6 +383,37 @@ class TestDatasetUtil(unittest.TestCase):
         self.assertCountEqual(flag_meanings, exp_flag_meanings)
         self.assertCountEqual(flag_masks, exp_flag_masks)
 
+    def test_add_flag_meaning_to_attrs(self):
+        flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": "1, 2, 4, 8"}
+
+        exp_flag_attrs = {
+            "flag_meanings": "f1 f2 f3 f4 f5",
+            "flag_masks": "1, 2, 4, 8, 16",
+        }
+
+        new_attrs = DatasetUtil.add_flag_meaning_to_attrs(flag_attrs, "f5", np.int32)
+
+        self.assertDictEqual(exp_flag_attrs, new_attrs)
+
+    def test_add_flag_meaning_to_attrs_first(self):
+        flag_attrs = {}
+
+        exp_flag_attrs = {"flag_meanings": "f1", "flag_masks": "1"}
+
+        new_attrs = DatasetUtil.add_flag_meaning_to_attrs(flag_attrs, "f1", np.int32)
+
+        self.assertDictEqual(exp_flag_attrs, new_attrs)
+
+    def test_add_flag_meaning_to_attrs_full(self):
+        flag_attrs = {
+            "flag_meanings": "f1 f2 f3 f4 f5 f6 f7 f8",
+            "flag_masks": "1, 2, 4, 8, 16, 32, 64, 128",
+        }
+
+        self.assertRaises(
+            ValueError, DatasetUtil.add_flag_meaning_to_attrs, flag_attrs, "f9", np.int8
+        )
+
     def test_add_encoding(self):
         vector_variable = DatasetUtil.create_variable([5], np.int8)
         DatasetUtil.add_encoding(

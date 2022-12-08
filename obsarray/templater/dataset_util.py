@@ -3,6 +3,7 @@ Utilities for creating xarray dataset variables in specified forms
 """
 
 import string
+from copy import deepcopy
 import xarray
 import numpy
 from typing import Union, Optional, List, Dict, Tuple
@@ -303,6 +304,49 @@ class DatasetUtil:
         flag_mask = [int(m) for m in flag_mask] if flag_mask != [""] else []
 
         return flag_meanings, flag_mask
+
+    @staticmethod
+    def add_flag_meaning_to_attrs(
+        attrs: dict, flag_meaning: str, dtype: numpy.typecodes
+    ) -> dict:
+        """
+        Add new meaning to flag variable attributes
+
+        :param attrs: flag variable attributes
+        :param flag_meaning: new flag name
+        :param dtype: flag variable dtype
+
+        :return: updated variable attributes
+        """
+
+        updated_attrs = deepcopy(attrs)
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(attrs)
+
+        # check if variable for available flags
+        max_n_flags = numpy.iinfo(dtype).bits
+        all_flag_masks = [2 ** i for i in range(0, max_n_flags)]
+        available_flag_masks = list(set(all_flag_masks) - set(flag_masks))
+
+        if not available_flag_masks:
+            raise ValueError(
+                "cannot assign any more masks to variable with dtype" + str(dtype)
+            )
+
+        flag_mask = min(available_flag_masks)
+
+        updated_attrs["flag_meanings"] = (
+            updated_attrs["flag_meanings"] + " " + flag_meaning
+            if "flag_meanings" in updated_attrs
+            else flag_meaning
+        )
+        updated_attrs["flag_masks"] = (
+            updated_attrs["flag_masks"] + ", " + str(flag_mask)
+            if "flag_masks" in updated_attrs
+            else str(flag_mask)
+        )
+
+        return updated_attrs
 
     @staticmethod
     def return_flags_dtype(n_masks: int) -> numpy.typecodes:
