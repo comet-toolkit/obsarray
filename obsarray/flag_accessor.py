@@ -132,11 +132,23 @@ class Flag:
         :return: flag variable flag value
         """
 
-        value = DatasetUtil.create_variable(
-            list(self._obj[self._flag_var_name][self._sli].shape),
-            bool,
-            dim_names=list(self._obj[self._flag_var_name].dims),
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(
+            self._obj[self._flag_var_name].attrs
         )
+
+        flag_bit = flag_meanings.index(self._flag_meaning)
+        flag_mask = flag_masks[flag_bit]
+
+        value = xr.DataArray(
+            np.zeros(self._obj[self._flag_var_name][self._sli].shape, dtype=bool),
+            dims=list(self._obj[self._flag_var_name][self._sli].dims),
+        )
+
+        value.values[:] = (
+            self._obj[self._flag_var_name][self._sli] & flag_mask
+        ).astype(bool)
+
+        return value
 
 
 class FlagVariable:

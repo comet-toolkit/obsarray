@@ -299,6 +299,16 @@ class TestFlag(unittest.TestCase):
             np.array([[0.0, 1.0], [0.0, 1.0]]),
         )
 
+    def test_value(self):
+        self.ds["temperature_flags"].values[:] = np.array(
+            [[[1, 1, 1], [0, 0, 0]], [[1, 1, 1], [0, 0, 0]]]
+        )
+
+        mask = self.ds.flag["temperature_flags"]["bad_data"][:, :, 0].value
+        exp_mask = np.array([[True, False], [True, False]])
+
+        np.testing.assert_array_equal(mask, exp_mask)
+
 
 if __name__ == "__main__":
     unittest.main()
