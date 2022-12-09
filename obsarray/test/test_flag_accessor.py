@@ -1,10 +1,12 @@
 """test_flag_accessor - tests for obsarray.flag_accessor"""
 
+from copy import deepcopy
 import xarray as xr
 import pandas as pd
 import numpy as np
 import unittest
 from unittest.mock import patch
+from obsarray.templater.template_util import create_var
 import obsarray
 
 
@@ -24,19 +26,6 @@ def create_ds():
         data_vars=dict(
             temperature=(["x", "y", "time"], temperature, {"units": "K"}),
             precipitation=(["x", "y", "time"], temperature, {"units": "K"}),
-            general_flags=(
-                ["x", "y", "time"],
-                np.zeros(temperature.shape, dtype=np.int8),
-                {"flag_meanings": []},
-            ),
-            temperature_flags=(
-                ["x", "y", "time"],
-                np.zeros(temperature.shape, dtype=np.int8),
-                {
-                    "flag_meanings": ["bad_data", "dubious data"],
-                    "applicable_vars": ["temperature"],
-                },
-            ),
         ),
         coords=dict(
             lon=(["x", "y"], lon),
@@ -45,6 +34,29 @@ def create_ds():
             reference_time=reference_time,
         ),
         attrs=dict(description="Weather related data."),
+    )
+
+    ds["temperature_flags"] = create_var(
+        "temperature_flags",
+        {
+            "dtype": "flag",
+            "dim": ["x", "y", "time"],
+            "attributes": {
+                "flag_meanings": ["bad_data", "dubious_data"],
+                "applicable_vars": ["temperature"],
+            },
+        },
+        {"x": 2, "y": 2, "time": 3},
+    )
+
+    ds["general_flags"] = create_var(
+        "temperature_flags",
+        {
+            "dtype": "flag",
+            "dim": ["x", "y", "time"],
+            "attributes": {"flag_meanings": []},
+        },
+        {"x": 2, "y": 2, "time": 3},
     )
 
     return ds
@@ -106,12 +118,27 @@ class TestFlagAccessor(unittest.TestCase):
 
     def test___setitem___DataArray(self):
         new_flag = xr.DataArray(
-            np.zeros(self.ds.precipitation.shape), dims=["x", "y", "time"]
+            np.zeros(self.ds.precipitation.shape),
+            dims=["x", "y", "time"],
+            attrs={"flag_meanings": "test"},
         )
 
         self.ds.flag["new_flag"] = new_flag
 
-        self.assertTrue("flag_meanings" in self.ds.new_flag.attrs)
+        self.assertEqual(self.ds.new_flag.attrs["flag_meanings"], "test")
+        self.assertEqual(self.ds.new_flag.attrs["flag_masks"], "1")
+
+        np.testing.assert_array_equal(new_flag.values, self.ds.new_flag.values)
+
+    def test___setitem___DataArray_nomeanings(self):
+        new_flag = xr.DataArray(
+            np.zeros(self.ds.precipitation.shape), dims=["x", "y", "time"], attrs={}
+        )
+
+        self.ds.flag["new_flag"] = new_flag
+
+        self.assertEqual(self.ds.new_flag.attrs["flag_meanings"], "")
+        self.assertEqual(self.ds.new_flag.attrs["flag_masks"], "")
 
         np.testing.assert_array_equal(new_flag.values, self.ds.new_flag.values)
 
@@ -156,24 +183,27 @@ class TestFlagVariable(unittest.TestCase):
         )
 
     @patch("obsarray.flag_accessor.Flag.__setitem__")
-    def test___setitem___existing_mask(self, m):
+    @patch("obsarray.flag_accessor.DatasetUtil.add_flag_meaning_to_attrs")
+    def test___setitem___existing_mask(self, mdu, mf):
         self.ds.flag["temperature_flags"]["bad_data"] = True
-
-        m.assert_called_with(slice(None, None, None), True)
+        mdu.assert_not_called()
+        mf.assert_called_with(slice(None, None, None), True)
 
     @patch("obsarray.flag_accessor.Flag.__setitem__")
-    def test___setitem___new_mask(self, m):
-        self.ds.flag["temperature_flags"]["test_flag"] = True
-        self.assertEqual(
-            self.ds["temperature_flags"].attrs["flag_meanings"][-1], "test_flag"
-        )
-        m.assert_called_with(slice(None, None, None), True)
+    @patch("obsarray.flag_accessor.DatasetUtil.add_flag_meaning_to_attrs")
+    def test___setitem___new_mask(self, mdu, mf):
 
-    def test___setitem___new_mask_full(self):
-        self.ds["temperature_flags"].attrs["flag_meanings"] = ["test"] * 8
-        self.assertRaises(
-            ValueError, self.ds.flag["temperature_flags"].__setitem__, "test_flag", True
+        original_attrs = deepcopy(self.ds["temperature_flags"].attrs)
+
+        self.ds.flag["temperature_flags"]["test_flag"] = True
+
+        mdu.assert_called_once_with(
+            original_attrs, "test_flag", self.ds["temperature_flags"].dtype
         )
+
+        self.assertDictEqual(self.ds["temperature_flags"].attrs, {})
+
+        mf.assert_called_with(slice(None, None, None), True)
 
     def test___len__(self):
         self.assertEqual(len(self.ds.flag["temperature_flags"]), 2)
@@ -185,12 +215,12 @@ class TestFlagVariable(unittest.TestCase):
             self.assertIsInstance(flag, obsarray.flag_accessor.Flag)
             var_names.append(flag._flag_meaning)
 
-        self.assertCountEqual(var_names, ["bad_data", "dubious data"])
+        self.assertCountEqual(var_names, ["bad_data", "dubious_data"])
 
     def test_keys(self):
         self.assertCountEqual(
             self.ds.flag["temperature_flags"].keys(),
-            ["bad_data", "dubious data"],
+            ["bad_data", "dubious_data"],
         )
 
 

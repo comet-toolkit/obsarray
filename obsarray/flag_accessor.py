@@ -4,6 +4,7 @@ import numpy as np
 import xarray as xr
 from typing import List, Optional, Union, Tuple
 from obsarray.templater.template_util import create_var
+from obsarray.templater.dataset_util import DatasetUtil
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
@@ -96,7 +97,12 @@ class Flag:
 
         :return: flag variable flag value
         """
-        raise NotImplementedError
+
+        value = DatasetUtil.create_variable(
+            list(self._obj[self._flag_var_name][self._sli].shape),
+            bool,
+            dim_names=list(self._obj[self._flag_var_name].dims),
+        )
 
 
 class FlagVariable:
@@ -134,21 +140,18 @@ class FlagVariable:
         :param flag_value: flag value as a single value boolean to apply to all data or boolean mask array
         """
 
-        if flag_meaning not in self._obj[self._flag_var_name].attrs["flag_meanings"]:
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(
+            self._obj[self._flag_var_name].attrs
+        )
 
-            # check if variable can accommodate extra flag
-            n_flags = len(self._obj[self._flag_var_name].attrs["flag_meanings"])
-            n_bits = self._obj[self._flag_var_name].dtype.itemsize
-            if n_flags >= n_bits:
-                raise ValueError(
-                    "cannot assign "
-                    + str(n_flags + 1)
-                    + " to variable with "
-                    + str(n_bits)
-                    + " bits"
-                )
-
-            self._obj[self._flag_var_name].attrs["flag_meanings"].append(flag_meaning)
+        if flag_meaning not in flag_meanings:
+            self._obj[
+                self._flag_var_name
+            ].attrs = DatasetUtil.add_flag_meaning_to_attrs(
+                self._obj[self._flag_var_name].attrs,
+                flag_meaning,
+                self._obj[self._flag_var_name].dtype,
+            )
 
         self[flag_meaning][:] = flag_value
 
@@ -199,7 +202,11 @@ class FlagVariable:
 
         :return: flag variable flag names
         """
-        return self._obj[self._flag_var_name].attrs["flag_meanings"]
+        flag_meanings, _ = DatasetUtil.unpack_flag_attrs(
+            self._obj[self._flag_var_name].attrs
+        )
+
+        return flag_meanings
 
 
 @xr.register_dataset_accessor("flag")
@@ -242,14 +249,15 @@ class FlagAccessor(object):
         Adds defined flag variable to dataset
 
         :param flag_var_name: flag variable name
-        :param flag_def: either xarray DataArray/Variable, or definition through tuple as ``(dims, [, attrs])``. ``dims`` is a list of variable dimension names, and ``attrs`` is a dictionary of variable attributes. ``attrs`` should include an element ``flag_meanings`` which is a list defining the flag variable flags.
+        :param flag_def: either xarray DataArray/Variable, or definition through tuple as ``(dims, attrs)``. ``dims`` is a list of variable dimension names, and ``attrs`` is a dictionary of variable attributes. ``attrs`` should include an element ``flag_meanings`` which is a list defining the flag variable flags.
         """
 
         # add uncertainty variable
         if type(flag_def) == xr.DataArray:
 
-            if "flag_meanings" not in flag_def.attrs:
-                flag_def.attrs["flag_meanings"] = []
+            # add necessary flag metadata if missing from provided data array
+            flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_def.attrs)
+            flag_def.attrs.update(DatasetUtil.pack_flag_attrs(flag_meanings))
 
             self._obj[flag_var_name] = flag_def
 
@@ -369,7 +377,7 @@ if __name__ == "__main__":
     pass
 
 
-class DatasetUtil:
+class DatasetUtil2:
     @staticmethod
     def create_flags_variable(dim_sizes, meanings, dim_names=None, attributes=None):
         """
