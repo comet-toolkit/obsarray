@@ -268,11 +268,14 @@ class DatasetUtil:
         return variable
 
     @staticmethod
-    def pack_flag_attrs(flag_meanings: List[str]) -> dict:
+    def pack_flag_attrs(
+        flag_meanings: List[str], flag_masks: Optional[list] = None
+    ) -> dict:
         """
         Derive flag related dataset attributes
 
         :param flag_meanings: flag meanings
+        :param flag_masks: pre-defined flag masks, generated if not provided
         :return: set of derived flag related attributes
         """
 
@@ -284,7 +287,10 @@ class DatasetUtil:
             str(flag_meanings)[1:-1].replace("'", "").replace(",", "")
         )
 
-        flag_attrs["flag_masks"] = str([2 ** i for i in range(0, n_masks)])[1:-1]
+        if flag_masks is None:
+            flag_masks = [2 ** i for i in range(0, n_masks)]
+
+        flag_attrs["flag_masks"] = str(flag_masks)[1:-1]
 
         return flag_attrs
 
@@ -345,6 +351,33 @@ class DatasetUtil:
             if "flag_masks" in updated_attrs
             else str(flag_mask)
         )
+
+        return updated_attrs
+
+    @staticmethod
+    def rm_flag_meaning_to_attrs(attrs: dict, flag_meaning: str) -> dict:
+        """
+        Remove flag meaning from flag variable attributes
+
+        :param attrs: flag variable attributes
+        :param flag_meaning: new flag name
+
+        :return: updated variable attributes
+        """
+
+        updated_attrs = deepcopy(attrs)
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(attrs)
+
+        if flag_meaning in flag_meanings:
+            i_meaning = flag_meanings.index(flag_meaning)
+        else:
+            raise ValueError("no flag " + flag_meaning)
+
+        del flag_meanings[i_meaning]
+        del flag_masks[i_meaning]
+
+        updated_attrs.update(DatasetUtil.pack_flag_attrs(flag_meanings, flag_masks))
 
         return updated_attrs
 
