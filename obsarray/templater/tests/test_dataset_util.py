@@ -422,7 +422,7 @@ class TestDatasetUtil(unittest.TestCase):
             ValueError, DatasetUtil.add_flag_meaning_to_attrs, flag_attrs, "f9", np.int8
         )
 
-    def test_rm_flag_meaning_to_attrs(self):
+    def test_rm_flag_meaning_from_attrs(self):
         flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": "1, 2, 4, 8"}
 
         exp_flag_attrs = {
@@ -430,18 +430,18 @@ class TestDatasetUtil(unittest.TestCase):
             "flag_masks": "1, 2, 8",
         }
 
-        new_attrs = DatasetUtil.rm_flag_meaning_to_attrs(flag_attrs, "f3")
+        new_attrs = DatasetUtil.rm_flag_meaning_from_attrs(flag_attrs, "f3")
 
         self.assertDictEqual(exp_flag_attrs, new_attrs)
 
-    def test_rm_flag_meaning_to_attrs_unknown_flag(self):
+    def test_rm_flag_meaning_from_attrs_unknown_flag(self):
         flag_attrs = {
             "flag_meanings": "f1 f2 f3 f4 f5 f6 f7 f8",
             "flag_masks": "1, 2, 4, 8, 16, 32, 64, 128",
         }
 
         self.assertRaises(
-            ValueError, DatasetUtil.rm_flag_meaning_to_attrs, flag_attrs, "f9"
+            ValueError, DatasetUtil.rm_flag_meaning_from_attrs, flag_attrs, "f9"
         )
 
     def test_add_encoding(self):

@@ -355,7 +355,7 @@ class DatasetUtil:
         return updated_attrs
 
     @staticmethod
-    def rm_flag_meaning_to_attrs(attrs: dict, flag_meaning: str) -> dict:
+    def rm_flag_meaning_from_attrs(attrs: dict, flag_meaning: str) -> dict:
         """
         Remove flag meaning from flag variable attributes
 
