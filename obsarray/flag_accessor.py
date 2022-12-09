@@ -155,6 +155,20 @@ class FlagVariable:
 
         self[flag_meaning][:] = flag_value
 
+    def __delitem__(self, flag_meaning):
+        """
+        Removes defined flag variable flag
+
+        :param flag_meaning: flag meaning name
+        """
+
+        self[flag_meaning][:] = False
+
+        self._obj[self._flag_var_name].attrs = DatasetUtil.rm_flag_meaning_from_attrs(
+            self._obj[self._flag_var_name].attrs,
+            flag_meaning,
+        )
+
     def __str__(self):
         """Custom __str__"""
         return "<{}>\nFlagVariable: '{}'\n{}".format(

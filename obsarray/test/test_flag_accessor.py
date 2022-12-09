@@ -205,6 +205,19 @@ class TestFlagVariable(unittest.TestCase):
 
         mf.assert_called_with(slice(None, None, None), True)
 
+    @patch("obsarray.flag_accessor.Flag.__setitem__")
+    @patch("obsarray.flag_accessor.DatasetUtil.rm_flag_meaning_from_attrs")
+    def test___delitem__(self, mdu, mf):
+        original_attrs = deepcopy(self.ds["temperature_flags"].attrs)
+
+        del self.ds.flag["temperature_flags"]["dubious_data"]
+
+        mdu.assert_called_once_with(original_attrs, "dubious_data")
+
+        self.assertDictEqual(self.ds["temperature_flags"].attrs, {})
+
+        mf.assert_called_with(slice(None, None, None), False)
+
     def test___len__(self):
         self.assertEqual(len(self.ds.flag["temperature_flags"]), 2)
 
