@@ -261,8 +261,43 @@ class TestFlag(unittest.TestCase):
         sli = self.ds.flag["temperature_flags"]["bad_data"].expand_sli((0,))
         self.assertEqual((0, slice(None), slice(None)), sli)
 
-    def test__setitem__(self):
-        pass
+    def test__setitem___False2True(self):
+        self.ds.flag["temperature_flags"]["bad_data"][:, 0, :] = True
+
+        exp_flags = np.array([[[1, 1, 1], [0, 0, 0]], [[1, 1, 1], [0, 0, 0]]])
+
+        np.testing.assert_array_equal(self.ds["temperature_flags"].values, exp_flags)
+
+    def test__setitem___True2False(self):
+
+        self.ds["temperature_flags"].values[:] = 1
+
+        self.ds.flag["temperature_flags"]["bad_data"][:, 1, :] = False
+
+        exp_flags = np.array([[[1, 1, 1], [0, 0, 0]], [[1, 1, 1], [0, 0, 0]]])
+
+        np.testing.assert_array_equal(self.ds["temperature_flags"].values, exp_flags)
+
+    def test__setitem___array(self):
+        self.ds["temperature_flags"].values[:] = np.array(
+            [[[1, 1, 1], [0, 0, 0]], [[1, 1, 1], [0, 0, 0]]]
+        )
+
+        self.ds.flag["temperature_flags"]["bad_data"][:, :, 0] = np.array(
+            [[False, True], [False, True]]
+        )
+
+        exp_flags = np.array([[[0, 1, 1], [1, 0, 0]], [[0, 1, 1], [1, 0, 0]]])
+
+        np.testing.assert_array_equal(self.ds["temperature_flags"].values, exp_flags)
+
+    def test__setitem___array_not_bool(self):
+        self.assertRaises(
+            TypeError,
+            self.ds.flag["temperature_flags"]["bad_data"],
+            slice(None, None, 0),
+            np.array([[0.0, 1.0], [0.0, 1.0]]),
+        )
 
 
 if __name__ == "__main__":

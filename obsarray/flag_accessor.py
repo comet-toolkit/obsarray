@@ -66,7 +66,41 @@ class Flag:
         :param flag_value: flag value as a single value boolean to apply to all data or boolean mask array
         """
 
-        raise NotImplementedError
+        self._sli = self.expand_sli(sli)
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(
+            self._obj[self._flag_var_name].attrs
+        )
+
+        flag_bit = flag_meanings.index(self._flag_meaning)
+        flag_mask = flag_masks[flag_bit]
+
+        # if boolean to apply to all data
+        if isinstance(flag_value, bool):
+            if flag_value:
+                self._obj[self._flag_var_name][self._sli].values[:] = (
+                    self._obj[self._flag_var_name][self._sli].values | flag_mask
+                )
+            else:
+                self._obj[self._flag_var_name][self._sli].values[:] = (
+                    self._obj[self._flag_var_name][self._sli].values & ~flag_mask
+                )
+
+        # else apply mask
+        else:
+            if flag_value.dtype is not np.dtype(bool):
+                TypeError("Flag mask must of boolean type")
+
+            i_true = np.where(flag_value == True)
+            i_false = np.where(flag_value == False)
+
+            self._obj[self._flag_var_name][self._sli].values[i_true] = (
+                self._obj[self._flag_var_name][self._sli].values[i_true] | flag_mask
+            )
+
+            self._obj[self._flag_var_name][self._sli].values[i_false] = (
+                self._obj[self._flag_var_name][self._sli].values[i_false] & ~flag_mask
+            )
 
     def expand_sli(self, sli: Optional[tuple] = None) -> tuple:
         """
