@@ -309,22 +309,6 @@ class Uncertainty:
                     )
         return err_corr_dict
 
-    def err_corr_dict_numdim(self) -> dict:
-        """
-        Error-correlation dictionary for uncertainty effect, where the keys are the dimension index rather than dimension name.
-
-        :return: dictionary with error-correlation for each dimension
-        """
-        # initialise error-correlation dictionary
-        err_corr_dict = self.err_corr_dict()
-        err_corr_dict_numdim = {}
-
-        for idim, dim in enumerate(self._obj.dims):
-            if dim in err_corr_dict.keys():
-                err_corr_dict_numdim[str(idim)] = err_corr_dict[dim]
-
-        return err_corr_dict_numdim
-
     def err_corr_matrix(self) -> xr.DataArray:
         """
         Error-correlation matrix for uncertainty effect.
@@ -823,7 +807,6 @@ class UncAccessor(object):
         """
 
         unc_var_names = self._var_unc_var_names(obs_var_name, unc_type=unc_type)
-
         if len(unc_var_names) == 0:
             return None
 
