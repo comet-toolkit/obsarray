@@ -27,6 +27,7 @@ obsarray is under active development. It is beta software.
     :caption: User Guide
 
     content/user/unc_accessor
+    content/user/flag_accessor
     content/user/templater
 
 .. toctree::

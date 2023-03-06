@@ -344,6 +344,106 @@ class TestDatasetUtil(unittest.TestCase):
         data_type = DatasetUtil.return_flags_dtype(32)
         self.assertEqual(data_type, np.uint32)
 
+    def test_pack_flag_attrs(self):
+        test_flag_attrs = DatasetUtil.pack_flag_attrs(["f1", "f2", "f3", "f4"])
+        exp_flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": "1, 2, 4, 8"}
+
+        self.assertDictEqual(test_flag_attrs, exp_flag_attrs)
+
+    def test_pack_flag_attrs_with_mask(self):
+        test_flag_attrs = DatasetUtil.pack_flag_attrs(
+            ["f1", "f2", "f3", "f4"], [1, 4, 8, 16]
+        )
+        exp_flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": "1, 4, 8, 16"}
+
+        self.assertDictEqual(test_flag_attrs, exp_flag_attrs)
+
+    def test_unpack_flag_attrs(self):
+        flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": "1, 2, 4, 8"}
+
+        exp_flag_meanings = ["f1", "f2", "f3", "f4"]
+        exp_flag_masks = [1, 2, 4, 8]
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_attrs)
+
+        self.assertCountEqual(flag_meanings, exp_flag_meanings)
+        self.assertCountEqual(flag_masks, exp_flag_masks)
+
+    def test_unpack_flag_attrs_emptyflags(self):
+        flag_attrs = {"flag_meanings": "", "flag_masks": ""}
+
+        exp_flag_meanings = []
+        exp_flag_masks = []
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_attrs)
+
+        self.assertCountEqual(flag_meanings, exp_flag_meanings)
+        self.assertCountEqual(flag_masks, exp_flag_masks)
+
+    def test_unpack_flag_attrs_noflagattrs(self):
+        flag_attrs = {}
+
+        exp_flag_meanings = []
+        exp_flag_masks = []
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_attrs)
+
+        self.assertCountEqual(flag_meanings, exp_flag_meanings)
+        self.assertCountEqual(flag_masks, exp_flag_masks)
+
+    def test_add_flag_meaning_to_attrs(self):
+        flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": "1, 2, 4, 8"}
+
+        exp_flag_attrs = {
+            "flag_meanings": "f1 f2 f3 f4 f5",
+            "flag_masks": "1, 2, 4, 8, 16",
+        }
+
+        new_attrs = DatasetUtil.add_flag_meaning_to_attrs(flag_attrs, "f5", np.int32)
+
+        self.assertDictEqual(exp_flag_attrs, new_attrs)
+
+    def test_add_flag_meaning_to_attrs_first(self):
+        flag_attrs = {}
+
+        exp_flag_attrs = {"flag_meanings": "f1", "flag_masks": "1"}
+
+        new_attrs = DatasetUtil.add_flag_meaning_to_attrs(flag_attrs, "f1", np.int32)
+
+        self.assertDictEqual(exp_flag_attrs, new_attrs)
+
+    def test_add_flag_meaning_to_attrs_full(self):
+        flag_attrs = {
+            "flag_meanings": "f1 f2 f3 f4 f5 f6 f7 f8",
+            "flag_masks": "1, 2, 4, 8, 16, 32, 64, 128",
+        }
+
+        self.assertRaises(
+            ValueError, DatasetUtil.add_flag_meaning_to_attrs, flag_attrs, "f9", np.int8
+        )
+
+    def test_rm_flag_meaning_from_attrs(self):
+        flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": "1, 2, 4, 8"}
+
+        exp_flag_attrs = {
+            "flag_meanings": "f1 f2 f4",
+            "flag_masks": "1, 2, 8",
+        }
+
+        new_attrs = DatasetUtil.rm_flag_meaning_from_attrs(flag_attrs, "f3")
+
+        self.assertDictEqual(exp_flag_attrs, new_attrs)
+
+    def test_rm_flag_meaning_from_attrs_unknown_flag(self):
+        flag_attrs = {
+            "flag_meanings": "f1 f2 f3 f4 f5 f6 f7 f8",
+            "flag_masks": "1, 2, 4, 8, 16, 32, 64, 128",
+        }
+
+        self.assertRaises(
+            ValueError, DatasetUtil.rm_flag_meaning_from_attrs, flag_attrs, "f9"
+        )
+
     def test_add_encoding(self):
         vector_variable = DatasetUtil.create_variable([5], np.int8)
         DatasetUtil.add_encoding(

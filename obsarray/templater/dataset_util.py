@@ -3,9 +3,10 @@ Utilities for creating xarray dataset variables in specified forms
 """
 
 import string
+from copy import deepcopy
 import xarray
 import numpy
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional, List, Dict, Tuple
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
@@ -255,19 +256,132 @@ class DatasetUtil:
             dim_sizes,
             data_type,
             dim_names=dim_names,
-            fill_value=0,
             attributes=attributes,
         )
 
+        #initialise flags to zero (instead of fillvalue)
+        variable.values=0*variable.values
+
         # add flag attributes
-        variable.attrs["flag_meanings"] = (
-            str(meanings)[1:-1].replace("'", "").replace(",", "")
-        )
-        variable.attrs["flag_masks"] = str([2 ** i for i in range(0, n_masks)])[1:-1]
+        variable.attrs.update(DatasetUtil.pack_flag_attrs(meanings))
 
         # todo - make sure flags can't have units
 
         return variable
+
+    @staticmethod
+    def pack_flag_attrs(
+        flag_meanings: List[str], flag_masks: Optional[list] = None
+    ) -> dict:
+        """
+        Derive flag related dataset attributes
+
+        :param flag_meanings: flag meanings
+        :param flag_masks: pre-defined flag masks, generated if not provided
+        :return: set of derived flag related attributes
+        """
+
+        n_masks = len(flag_meanings)
+
+        flag_attrs = dict()
+
+        flag_attrs["flag_meanings"] = (
+            str(flag_meanings)[1:-1].replace("'", "").replace(",", "")
+        )
+
+        if flag_masks is None:
+            flag_masks = [2 ** i for i in range(0, n_masks)]
+
+        flag_attrs["flag_masks"] = str(flag_masks)[1:-1]
+
+        return flag_attrs
+
+    @staticmethod
+    def unpack_flag_attrs(attrs: dict) -> Tuple[list, list]:
+        """
+        Extract flag related metadata from dataset attributes
+
+        :param attrs: flag variable attributes
+        :return: flag meanings, flag masks lists
+        """
+
+        flag_meanings = (
+            attrs["flag_meanings"].split() if "flag_meanings" in attrs else []
+        )
+        flag_mask = attrs["flag_masks"].split(",") if "flag_masks" in attrs else []
+        flag_mask = [int(m) for m in flag_mask] if flag_mask != [""] else []
+
+        return flag_meanings, flag_mask
+
+    @staticmethod
+    def add_flag_meaning_to_attrs(
+        attrs: dict, flag_meaning: str, dtype: numpy.typecodes
+    ) -> dict:
+        """
+        Add new meaning to flag variable attributes
+
+        :param attrs: flag variable attributes
+        :param flag_meaning: new flag name
+        :param dtype: flag variable dtype
+
+        :return: updated variable attributes
+        """
+
+        updated_attrs = deepcopy(attrs)
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(attrs)
+
+        # check if variable for available flags
+        max_n_flags = numpy.iinfo(dtype).bits
+        all_flag_masks = [2 ** i for i in range(0, max_n_flags)]
+        available_flag_masks = list(set(all_flag_masks) - set(flag_masks))
+
+        if not available_flag_masks:
+            raise ValueError(
+                "cannot assign any more masks to variable with dtype" + str(dtype)
+            )
+
+        flag_mask = min(available_flag_masks)
+
+        updated_attrs["flag_meanings"] = (
+            updated_attrs["flag_meanings"] + " " + flag_meaning
+            if "flag_meanings" in updated_attrs
+            else flag_meaning
+        )
+        updated_attrs["flag_masks"] = (
+            updated_attrs["flag_masks"] + ", " + str(flag_mask)
+            if "flag_masks" in updated_attrs
+            else str(flag_mask)
+        )
+
+        return updated_attrs
+
+    @staticmethod
+    def rm_flag_meaning_from_attrs(attrs: dict, flag_meaning: str) -> dict:
+        """
+        Remove flag meaning from flag variable attributes
+
+        :param attrs: flag variable attributes
+        :param flag_meaning: new flag name
+
+        :return: updated variable attributes
+        """
+
+        updated_attrs = deepcopy(attrs)
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(attrs)
+
+        if flag_meaning in flag_meanings:
+            i_meaning = flag_meanings.index(flag_meaning)
+        else:
+            raise ValueError("no flag " + flag_meaning)
+
+        del flag_meanings[i_meaning]
+        del flag_masks[i_meaning]
+
+        updated_attrs.update(DatasetUtil.pack_flag_attrs(flag_meanings, flag_masks))
+
+        return updated_attrs
 
     @staticmethod
     def return_flags_dtype(n_masks: int) -> numpy.typecodes:
