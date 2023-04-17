@@ -369,6 +369,28 @@ class TestDatasetUtil(unittest.TestCase):
         self.assertCountEqual(flag_meanings, exp_flag_meanings)
         self.assertCountEqual(flag_masks, exp_flag_masks)
 
+    def test_unpack_flag_attrs_nparray(self):
+        flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": np.array([1, 2, 4, 8])}
+
+        exp_flag_meanings = ["f1", "f2", "f3", "f4"]
+        exp_flag_masks = [1, 2, 4, 8]
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_attrs)
+
+        self.assertCountEqual(flag_meanings, exp_flag_meanings)
+        self.assertCountEqual(flag_masks, exp_flag_masks)
+
+    def test_unpack_flag_attrs_list(self):
+        flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": [1, 2, 4, 8]}
+
+        exp_flag_meanings = ["f1", "f2", "f3", "f4"]
+        exp_flag_masks = [1, 2, 4, 8]
+
+        flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_attrs)
+
+        self.assertCountEqual(flag_meanings, exp_flag_meanings)
+        self.assertCountEqual(flag_masks, exp_flag_masks)
+
     def test_unpack_flag_attrs_emptyflags(self):
         flag_attrs = {"flag_meanings": "", "flag_masks": ""}
 

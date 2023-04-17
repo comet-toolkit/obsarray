@@ -300,19 +300,20 @@ class DatasetUtil:
     def unpack_flag_attrs(attrs: dict) -> Tuple[list, list]:
         """
         Extract flag related metadata from dataset attributes
-
         :param attrs: flag variable attributes
         :return: flag meanings, flag masks lists
         """
-
         flag_meanings = (
             attrs["flag_meanings"].split() if "flag_meanings" in attrs else []
         )
-        flag_mask = attrs["flag_masks"].split(",") if "flag_masks" in attrs else []
+        if "flag_masks" not in attrs:
+            flag_mask = []
+        else:
+            flag_mask = attrs["flag_masks"].split(",") if isinstance(attrs["flag_masks"], str) else list(
+            attrs["flag_masks"])
         flag_mask = [int(m) for m in flag_mask] if flag_mask != [""] else []
 
         return flag_meanings, flag_mask
-
     @staticmethod
     def add_flag_meaning_to_attrs(
         attrs: dict, flag_meaning: str, dtype: numpy.typecodes
