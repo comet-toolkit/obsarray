@@ -434,6 +434,28 @@ class TestDatasetUtil(unittest.TestCase):
 
         self.assertDictEqual(exp_flag_attrs, new_attrs)
 
+    def test_add_flag_meaning_to_attrs_add_to_nparray(self):
+        flag_attrs = {"flag_meanings": "f1", "flag_masks": np.array([1])}
+
+        exp_flag_attrs = {"flag_meanings": "f1 f2", "flag_masks": np.array([1, 2])}
+
+        new_attrs = DatasetUtil.add_flag_meaning_to_attrs(flag_attrs, "f2", np.int32)
+
+        self.assertEqual(exp_flag_attrs.keys(), new_attrs.keys())
+        for k in exp_flag_attrs.keys():
+            self.assertTrue(all([i == j for i, j in zip(exp_flag_attrs[k], new_attrs[k])]))
+
+    def test_add_flag_meaning_to_attrs_add_to_list(self):
+        flag_attrs = {"flag_meanings": "f1", "flag_masks": [1]}
+
+        exp_flag_attrs = {"flag_meanings": "f1 f2", "flag_masks": np.array([1, 2])}
+
+        new_attrs = DatasetUtil.add_flag_meaning_to_attrs(flag_attrs, "f2", np.int32)
+
+        self.assertEqual(exp_flag_attrs.keys(), new_attrs.keys())
+        for k in exp_flag_attrs.keys():
+            self.assertTrue(all([i == j for i, j in zip(exp_flag_attrs[k], new_attrs[k])]))
+
     def test_add_flag_meaning_to_attrs_full(self):
         flag_attrs = {
             "flag_meanings": "f1 f2 f3 f4 f5 f6 f7 f8",
@@ -446,6 +468,30 @@ class TestDatasetUtil(unittest.TestCase):
 
     def test_rm_flag_meaning_from_attrs(self):
         flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": "1, 2, 4, 8"}
+
+        exp_flag_attrs = {
+            "flag_meanings": "f1 f2 f4",
+            "flag_masks": "1, 2, 8",
+        }
+
+        new_attrs = DatasetUtil.rm_flag_meaning_from_attrs(flag_attrs, "f3")
+
+        self.assertDictEqual(exp_flag_attrs, new_attrs)
+
+    def test_rm_flag_meaning_from_nparray_attrs(self):
+        flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": np.array([1, 2, 4, 8])}
+
+        exp_flag_attrs = {
+            "flag_meanings": "f1 f2 f4",
+            "flag_masks": "1, 2, 8",
+        }
+
+        new_attrs = DatasetUtil.rm_flag_meaning_from_attrs(flag_attrs, "f3")
+
+        self.assertDictEqual(exp_flag_attrs, new_attrs)
+
+    def test_rm_flag_meaning_from_list_attrs(self):
+        flag_attrs = {"flag_meanings": "f1 f2 f3 f4", "flag_masks": [1, 2, 4, 8]}
 
         exp_flag_attrs = {
             "flag_meanings": "f1 f2 f4",

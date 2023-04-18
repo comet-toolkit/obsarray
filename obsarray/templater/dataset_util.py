@@ -314,6 +314,7 @@ class DatasetUtil:
         flag_mask = [int(m) for m in flag_mask] if flag_mask != [""] else []
 
         return flag_meanings, flag_mask
+
     @staticmethod
     def add_flag_meaning_to_attrs(
         attrs: dict, flag_meaning: str, dtype: numpy.typecodes
@@ -349,11 +350,15 @@ class DatasetUtil:
             if "flag_meanings" in updated_attrs
             else flag_meaning
         )
-        updated_attrs["flag_masks"] = (
-            updated_attrs["flag_masks"] + ", " + str(flag_mask)
-            if "flag_masks" in updated_attrs
-            else str(flag_mask)
-        )
+
+        if "flag_masks" not in updated_attrs:
+            updated_attrs["flag_masks"] = str(flag_mask)
+        else:
+            updated_attrs["flag_masks"] = (
+                updated_attrs["flag_masks"] + ", " + str(flag_mask)
+                if isinstance(updated_attrs["flag_masks"], str)
+                else numpy.append(updated_attrs["flag_masks"], flag_mask)
+            )
 
         return updated_attrs
 
