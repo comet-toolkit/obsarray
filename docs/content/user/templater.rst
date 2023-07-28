@@ -207,7 +207,9 @@ Populating and writing the dataset
             "quality_flag_time": {
                 "dtype": "flag",
                 "dim": ["time"],
-                "flag_meanings": ["bad", "dubious"]
+                "attributes": {
+                    "flag_meanings": ["bad", "dubious"]
+                }
             },
         }
 
