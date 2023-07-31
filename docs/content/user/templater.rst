@@ -188,7 +188,7 @@ Populating and writing the dataset
                 "dim": ["x", "y", "time"],
                 "attrs": {
                     "units": "K",
-                    "u_components": ["u_temperature"]
+                    "unc_comps": ["u_temperature"]
                 }
             },
             "u_temperature": {
