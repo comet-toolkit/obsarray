@@ -256,9 +256,11 @@ class DatasetUtil:
             dim_sizes,
             data_type,
             dim_names=dim_names,
-            fill_value=0,
             attributes=attributes,
         )
+
+        #initialise flags to zero (instead of fillvalue)
+        variable.values=0*variable.values
 
         # add flag attributes
         variable.attrs.update(DatasetUtil.pack_flag_attrs(meanings))

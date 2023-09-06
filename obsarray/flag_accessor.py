@@ -465,8 +465,10 @@ class DatasetUtil2:
             data_type,
             dim_names=dim_names,
             attributes=attributes,
-            fill_value=0,
         )
+
+        #initialise flags to zero (instead of fillvalue)
+        variable.values=0*variable.values
 
         # add flag attributes
         variable.attrs["flag_meanings"] = (
