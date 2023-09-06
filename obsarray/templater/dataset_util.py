@@ -525,7 +525,7 @@ class DatasetUtil:
         flags_ds = DatasetUtil.unpack_flags(da)
 
         flags = flags if flags is not None else flags_ds.variables
-        mask_flags = [flags_ds[flag].values for flag in flags]
+        mask_flags = numpy.array([flags_ds[flag].values for flag in flags])
 
         return numpy.logical_or.reduce(mask_flags)
 
@@ -547,7 +547,7 @@ class DatasetUtil:
         flags_ds = DatasetUtil.unpack_flags(da)
 
         flags = flags if flags is not None else flags_ds.variables
-        mask_flags = [flags_ds[flag].values for flag in flags]
+        mask_flags = numpy.array([flags_ds[flag].values for flag in flags])
 
         return numpy.logical_and.reduce(mask_flags)
 
