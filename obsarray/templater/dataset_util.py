@@ -434,6 +434,8 @@ class DatasetUtil:
 
         if fill_value is not None:
             encoding_dict.update({"_FillValue": fill_value})
+        else:
+            encoding_dict.update({"_FillValue": DatasetUtil.get_default_fill_value(dtype)})
 
         variable.encoding = encoding_dict
 

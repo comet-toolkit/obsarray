@@ -159,6 +159,7 @@ class TemplateUtil:
 
             if "encoding" in var_attrs:
                 du.add_encoding(variable, **var_attrs["encoding"])
+                variable.attrs.pop("_FillValue")
 
         return variable
 
