@@ -109,7 +109,7 @@ class Uncertainty:
         # Find dimensions in variable slice
         sli_dims = [
             dim
-            for dim, idx in zip(self._obj.dims.keys(), self._sli)
+            for dim, idx in zip(self._obj.dims.keys(), self._sli)  # Due to hit a FutureDeprecation warning
             if not isinstance(idx, int)
         ]
 
