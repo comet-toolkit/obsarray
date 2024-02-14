@@ -28,6 +28,7 @@ Example Usage
 First we build an example dataset that represents a time series of temperatures (for more on how do this see the `xarray <https://docs.xarray.dev/en/stable/>`_ documentation).
 
 .. ipython:: python
+   :okwarning:
 
    import numpy as np
    import xarray as xr
