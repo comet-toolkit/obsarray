@@ -21,17 +21,18 @@ Altogether then, we can define the following basic template:
 .. _variables spec ex:
 
 .. ipython:: python
+   :okwarning:
 
-    import numpy as np
+   import numpy as np
 
-    temp_var_dict = {
-        "dim": ["lon", "lat", "time"],
-        "dtype": np.float32,
-        "attributes": {"units": "K"}
-    }
-    template = {
-        "temp": temp_var_dict,
-    }
+   temp_var_dict = {
+       "dim": ["lon", "lat", "time"],
+       "dtype": np.float32,
+       "attributes": {"units": "K"}
+   }
+   template = {
+       "temp": temp_var_dict,
+   }
 
 .. _special variables:
 
@@ -50,6 +51,7 @@ Setting the ``dtype`` as ``"flag"`` in the **variable** dictionary builds a vari
 The variable must be defined with a ``"flag_meanings"`` attribute that lists the per bit flag meanings as follows:
 
 .. ipython:: python
+   :okwarning:
 
    variables = {
        "quality_flag": {
@@ -107,6 +109,7 @@ Measurement variables with uncertainties should include a list of ``unc_comps`` 
 Updating the above example to include an uncertainty component, we can therefore define:
 
 .. ipython:: python
+   :okwarning:
 
    import numpy as np
 
@@ -138,6 +141,7 @@ Creating a template dataset
 With the ``template`` dictionary prepared, only two more specifications are required to build a template dataset. First a dictionary that defines the sizes of all the dimensions used in the ``template`` dictionary, e.g.:
 
 .. ipython:: python
+   :okwarning:
 
    dim_sizes = {"lat": 20, "lon": 10, "time": 5}
 
@@ -145,6 +149,7 @@ With the ``template`` dictionary prepared, only two more specifications are requ
 Secondly, a dictionary of dataset global metadata, e.g.:
 
 .. ipython:: python
+   :okwarning:
 
    metadata = {"dataset_name": "temperature dataset"}
 
@@ -152,6 +157,7 @@ Secondly, a dictionary of dataset global metadata, e.g.:
 Combining the above together a template dataset can be created as follows:
 
 .. ipython:: python
+   :okwarning:
 
    import obsarray
    ds = obsarray.create_ds(

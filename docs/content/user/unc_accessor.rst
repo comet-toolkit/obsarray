@@ -6,6 +6,7 @@ Interfacing with Dataset Uncertainty
 
 .. ipython:: python
    :suppress:
+   :okwarning:
 
    import numpy as np
    import pandas as pd
@@ -54,10 +55,11 @@ To access the uncertainty information for a particular measured variable, use th
 You can see which dataset variables have uncertainty variables associated with them by looking at ``unc`` accessor keys.
 
 .. ipython:: python
+   :okwarning:
 
-    import obsarray
+   import obsarray
 
-    ds.unc.keys()
+   ds.unc.keys()
 
 This means that the dataset variables ``temperature`` and ``precipitation`` have uncertainty data defined for them. We refer to these variables as "observation variables".
 
@@ -67,8 +69,9 @@ Interfacing with Variable Uncertainty
 To inspect the uncertainty data defined for a particular observation variable, index the ``unc`` accessor with it's name.
 
 .. ipython:: python
+   :okwarning:
 
-    ds.unc["temperature"]
+   ds.unc["temperature"]
 
 
 This returns a :py:class:`~obsarray.unc_accessor.VariableUncertainty` object, which provides an interface to an observation variable's uncertainty information. This shows that ``temperature`` has two uncertainty variables - ``u_ran_temperature`` and ``u_sys_temperature``.
@@ -76,12 +79,14 @@ This returns a :py:class:`~obsarray.unc_accessor.VariableUncertainty` object, wh
 To evaluate the total uncertainty for the observation variable, run:
 
 .. ipython:: python
+   :okwarning:
 
    ds.unc["temperature"].total_unc()
 
 which combines all the uncertainty components by sum of squares. Similarly, you can see the combined random or systematic uncertainty components (where more than one component of either is defined), as follows,
 
 .. ipython:: python
+   :okwarning:
 
    ds.unc["temperature"].random_unc()
    ds.unc["temperature"].systematic_unc()
@@ -89,6 +94,7 @@ which combines all the uncertainty components by sum of squares. Similarly, you 
 You can also see the combined error-correlation matrix,
 
 .. ipython:: python
+   :okwarning:
 
    ds.unc["temperature"].total_err_corr_matrix()
 
@@ -97,12 +103,14 @@ This gives the cross-element error-correlation between each element in the ``tem
 Similar, the error-covariance matrix,
 
 .. ipython:: python
+   :okwarning:
 
    ds.unc["temperature"].total_err_cov_matrix()
 
 You can also do this to access a subset of the total error-covariance matrix by indexing with the slice of interest (this can avoid building the whole error-covariance matrix in memory).
 
 .. ipython:: python
+   :okwarning:
 
    # error-covariance matrix for measurements at one time step
    ds.unc["temperature"][:,:,1].total_err_cov_matrix()
@@ -114,6 +122,7 @@ Interfacing with Uncertainty Components
 To inspect a specific uncertainty component of an observation variable, index the variable uncertainty with its name.
 
 .. ipython:: python
+   :okwarning:
 
     ds.unc["temperature"]["u_ran_temperature"]
 
@@ -122,6 +131,7 @@ This returns a :py:class:`~obsarray.unc_accessor.Uncertainty` object, which prov
 The error correlation structure of the uncertainty variable can be inspected as follows:
 
 .. ipython:: python
+   :okwarning:
 
    ds.unc["temperature"]["u_ran_temperature"].err_corr
    ds.unc["temperature"]["u_ran_temperature"].err_corr_dict()
@@ -135,6 +145,7 @@ The same interface can be used to add/remove uncertainty components from the dat
 To define the error-correlation structure, the attributes must contain an entry called ``err_corr`` with a list that defines the error-correlation structure per data dimension (if omitted the error-correlation is assumed random). How to define these is defined in detail in the dataset templating :ref:`section <err corr>`. See below for an example:
 
 .. ipython:: python
+   :okwarning:
 
    # Define error-correlation structure
    err_corr_def = [
@@ -168,6 +179,7 @@ To define the error-correlation structure, the attributes must contain an entry 
 A component of uncertainty can be simply be deleted as,
 
 .. ipython:: python
+   :okwarning:
 
    del ds.unc["temperature"]["u_sys_temperature"]
 
