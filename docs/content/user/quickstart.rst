@@ -71,17 +71,6 @@ The defined uncertainty information then can be interfaced with, for example:
 
 This information is preserved in metadata when written to netCDF files
 
-.. ipython:: python
-
-   # show uncertainty components
-   ds.unc["temperature"]
-   # write file
-   ds.to_netcdf("~/temp_ds.nc")
-   # reopen file
-   ds = xr.open_dataset("~/temp_ds.nc")
-   # show uncertainty components
-   ds.unc["temperature"]
-
 Similarly, data flags can be defined using the dataset’s ``flag`` accessor, which again is provided by **obsarray**. These flags are defined following the `CF Convention <https://cfconventions.org/Data/cf-conventions/cf-conventions-1.10/cf-conventions.html#flags>`_ metadata standard.
 
 A flag variable can be created to store data for a set of flags with defined meanings
