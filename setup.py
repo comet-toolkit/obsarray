@@ -22,16 +22,26 @@ setup(
     license="GPLv3",
     author="CoMet Toolkit Team",
     author_email="team@comet-toolkit.org",
-    description="Measurement uncertainty handling in Python",
+    description="Measurement data handling in Python",
     long_description=read("README.md"),
     packages=find_packages(exclude=("tests",)),
     install_requires=["numpy", "xarray", "comet_maths"],
-    extras_require={"dev": ["pre-commit", "tox", "sphinx", "sphinx_rtd_theme"]},
+    extras_require={
+        "dev": [
+            "pre-commit",
+            "tox",
+            "sphinx",
+            "sphinx_design",
+            "ipython",
+            "sphinx_autosummary_accessors",
+        ]
+    },
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
 )
