@@ -504,6 +504,18 @@ class TestUncertainty(unittest.TestCase):
 
         m.assert_called_with("in_slice")
 
+    def test_expand_slice_1d_full(self):
+        self.ds["new"] = (["time"], np.ones(3), {})
+        self.ds.unc["new"]["u_new"] = (["time"], np.ones(3), {})
+        sli = self.ds.unc["new"]["u_new"]._expand_sli((1))
+        self.assertEqual((1,), sli)
+
+    def test_expand_slice_1d_None(self):
+        self.ds["new"] = (["time"], np.ones(3), {})
+        self.ds.unc["new"]["u_new"] = (["time"], np.ones(3), {})
+        sli = self.ds.unc["temperature"]["u_ran_temperature"]._expand_sli()
+        self.assertEqual((slice(None),), sli)
+
     def test_expand_slice_full(self):
         sli = self.ds.unc["temperature"]["u_ran_temperature"].expand_sli((1, 1, 1))
         self.assertEqual((1, 1, 1), sli)
