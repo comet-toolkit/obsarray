@@ -32,6 +32,7 @@ setup(
             "tox",
             "sphinx",
             "sphinx_design",
+            "sphinx_book_theme",
             "ipython",
             "sphinx_autosummary_accessors",
         ]
