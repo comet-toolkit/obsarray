@@ -1,3 +1,5 @@
+.. _template:
+
 =================================
 Creating Datasets Using Templates
 =================================
