@@ -45,6 +45,7 @@ First we build an example dataset that represents a time series of temperatures 
 Uncertainty and error-covariance information for observation variables can be defined using the dataset's ``unc`` accessor, which is provided by **obsarray**.
 
 .. ipython:: python
+   :okwarning:
 
    # add random component uncertainty
    ds.unc["temperature"]["u_r_temperature"] = (
@@ -64,6 +65,7 @@ Dataset structures can be defined separately using **obsarray**'s :ref:`templati
 The defined uncertainty information then can be interfaced with, for example:
 
 .. ipython:: python
+   :okwarning:
 
    # get total combined uncertainty of all components
    ds.unc["temperature"].total_unc()
@@ -77,17 +79,19 @@ Similarly, data flags can be defined using the dataset’s ``flag`` accessor, wh
 A flag variable can be created to store data for a set of flags with defined meanings
 
 .. ipython:: python
+   :okwarning:
 
-    ds.flag["quality_flags"] = (
-        ["time"],
-        {"flag_meanings": ["dubious", "invalid", "saturated"]}
-    )
-    print(ds.flag)
+   ds.flag["quality_flags"] = (
+       ["time"],
+       {"flag_meanings": ["dubious", "invalid", "saturated"]}
+   )
+   print(ds.flag)
 
 These flag meanings can be indexed, to get and set their value
 
 .. ipython:: python
+   :okwarning:
 
-    print(ds.flag["quality_flags"]["dubious"].value)
-    ds.flag["quality_flags"]["dubious"][0] = True
-    print(ds.flag["quality_flags"]["dubious"].value)
+   print(ds.flag["quality_flags"]["dubious"].value)
+   ds.flag["quality_flags"]["dubious"][0] = True
+   print(ds.flag["quality_flags"]["dubious"].value)
