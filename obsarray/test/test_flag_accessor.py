@@ -50,13 +50,23 @@ def create_ds():
     )
 
     ds["general_flags"] = create_var(
-        "temperature_flags",
+        "general_flags",
         {
             "dtype": "flag",
             "dim": ["x", "y", "time"],
             "attributes": {"flag_meanings": []},
         },
         {"x": 2, "y": 2, "time": 3},
+    )
+
+    ds["time_flags"] = create_var(
+        "temperature_flags",
+        {
+            "dtype": "flag",
+            "dim": ["time"],
+            "attributes": {"flag_meanings": ["dubious", "invalid"]},
+        },
+        {"time": 3},
     )
 
     return ds
@@ -191,6 +201,36 @@ class TestFlagVariable(unittest.TestCase):
 
     @patch("obsarray.flag_accessor.Flag.__setitem__")
     @patch("obsarray.flag_accessor.DatasetUtil.add_flag_meaning_to_attrs")
+    def test___setitem___new_mask_1d(self, mdu, mf):
+        original_attrs = deepcopy(self.ds["time_flags"].attrs)
+
+        self.ds.flag["time_flags"]["test_flag"] = True
+
+        mdu.assert_called_once_with(
+            original_attrs, "test_flag", self.ds["time_flags"].dtype
+        )
+
+        self.assertDictEqual(self.ds["time_flags"].attrs, {})
+
+        mf.assert_called_with(slice(None, None, None), True)
+
+    @patch("obsarray.flag_accessor.Flag.__setitem__")
+    @patch("obsarray.flag_accessor.DatasetUtil.add_flag_meaning_to_attrs")
+    def test___setitem___new_mask(self, mdu, mf):
+        original_attrs = deepcopy(self.ds["temperature_flags"].attrs)
+
+        self.ds.flag["temperature_flags"]["test_flag"] = True
+
+        mdu.assert_called_once_with(
+            original_attrs, "test_flag", self.ds["temperature_flags"].dtype
+        )
+
+        self.assertDictEqual(self.ds["temperature_flags"].attrs, {})
+
+        mf.assert_called_with(slice(None, None, None), True)
+
+    @patch("obsarray.flag_accessor.Flag.__setitem__")
+    @patch("obsarray.flag_accessor.DatasetUtil.add_flag_meaning_to_attrs")
     def test___setitem___new_mask(self, mdu, mf):
 
         original_attrs = deepcopy(self.ds["temperature_flags"].attrs)
@@ -241,7 +281,7 @@ class TestFlag(unittest.TestCase):
     def setUp(self):
         self.ds = create_ds()
 
-    @patch("obsarray.flag_accessor.Flag.expand_sli", return_value="slice")
+    @patch("obsarray.flag_accessor.Flag._expand_sli", return_value="slice")
     def test___getitem__(self, m):
         self.assertEqual(
             self.ds.flag["temperature_flags"]["bad_data"]["in_slice"]._sli, "slice"
@@ -249,17 +289,34 @@ class TestFlag(unittest.TestCase):
 
         m.assert_called_with("in_slice")
 
+    def test_expand_slice_1d_full(self):
+        sli = self.ds.flag["time_flags"]["dubious"]._expand_sli((1))
+        self.assertEqual((1,), sli)
+
+    def test_expand_slice_1d_None(self):
+        sli = self.ds.flag["time_flags"]["dubious"]._expand_sli()
+        self.assertEqual((slice(None),), sli)
+
     def test_expand_slice_full(self):
-        sli = self.ds.flag["temperature_flags"]["bad_data"].expand_sli((1, 1, 1))
+        sli = self.ds.flag["temperature_flags"]["bad_data"]._expand_sli((1, 1, 1))
         self.assertEqual((1, 1, 1), sli)
 
     def test_expand_slice_None(self):
-        sli = self.ds.flag["temperature_flags"]["bad_data"].expand_sli()
+        sli = self.ds.flag["temperature_flags"]["bad_data"]._expand_sli()
         self.assertEqual((slice(None), slice(None), slice(None)), sli)
 
     def test_expand_slice_first(self):
-        sli = self.ds.flag["temperature_flags"]["bad_data"].expand_sli((0,))
+        sli = self.ds.flag["temperature_flags"]["bad_data"]._expand_sli((0,))
         self.assertEqual((0, slice(None), slice(None)), sli)
+
+    def test__setitem___1element_False2True(self):
+        self.ds["temperature_flags"].values[:] = 0
+
+        self.ds.flag["temperature_flags"]["bad_data"][0, 0, 0] = True
+
+        exp_flags = np.array([[[1, 0, 0], [0, 0, 0]], [[0, 0, 0], [0, 0, 0]]])
+
+        np.testing.assert_array_equal(self.ds["temperature_flags"].values, exp_flags)
 
     def test__setitem___False2True(self):
         self.ds.flag["temperature_flags"]["bad_data"][:, 0, :] = True

@@ -5,4 +5,7 @@ comet_maths
 
 # for docs
 sphinx
-sphinx-book-theme
+sphinx_design
+ipython
+sphinx_autosummary_accessors
+sphinx_book_theme

@@ -39,7 +39,7 @@ class Uncertainty:
         self._var_name = var_name
         self._sli = tuple([slice(None)] * self._obj[self._unc_var_name].ndim)
         if sli is not None:
-            self._sli = self.expand_sli(sli)
+            self._sli = self._expand_sli(sli)
 
     def __str__(self):
         """Custom __str__"""
@@ -61,11 +61,11 @@ class Uncertainty:
         """
 
         # update slice
-        self._sli = self.expand_sli(sli)
+        self._sli = self._expand_sli(sli)
 
         return self
 
-    def expand_sli(self, sli: Optional[tuple] = None) -> tuple:
+    def _expand_sli(self, sli: Optional[tuple] = None) -> tuple:
         """
         Function to expand the provided sli so that it always has the right number of dimensions
 
@@ -79,16 +79,12 @@ class Uncertainty:
         if sli is None:
             out_sli = tuple([slice(None)] * self._obj[self._unc_var_name].ndim)
 
-        # # if the sli tuple has the correct shape, it can be used directly
-        # elif self._obj[self._unc_var_name].ndim == len(sli):
-        #     out_sli = sli
-
-        # If different shape, set each dimension to slice(None) and then change the
-        # ones provided in the new slice. E.g. if providing [0] for a variable with
-        # 3 dimensions, this becomes [0,slice(None),slice(None)]
+        # Otherwise, set each : dimension to slice(None)
+        # E.g. if providing [0] for a variable with 3 dimensions, this becomes
+        # [0,slice(None),slice(None)]
         else:
             out_sli = list([slice(None)] * self._obj[self._unc_var_name].ndim)
-            sli_list = list(sli)
+            sli_list = list(sli) if isinstance(sli, tuple) else [sli]
             for i in range(len(sli_list)):
                 if not sli_list[i] == ":":
                     out_sli[i] = sli_list[i]
@@ -109,7 +105,7 @@ class Uncertainty:
         # Find dimensions in variable slice
         sli_dims = [
             dim
-            for dim, idx in zip(self._obj.dims.keys(), self._sli)
+            for dim, idx in zip(self._obj.dims.keys(), self._sli)  # Due to hit a FutureDeprecation warning
             if not isinstance(idx, int)
         ]
 
@@ -659,7 +655,12 @@ class UncAccessor(object):
         return str(self)
 
     def __getitem__(self, var_name: str) -> VariableUncertainty:
-        """Custom  __repr__"""
+        """
+        Returns :py:class:`~obsarray.unc_accessor.VariableUncertainty` object to interface with uncertainty information for a given observation variable
+
+        :param var_name: observation variable name
+        :return: observation variable uncertainty interface
+        """
         return VariableUncertainty(self._obj, var_name)
 
     def __len__(self):
@@ -695,7 +696,7 @@ class UncAccessor(object):
         else:
             raise StopIteration
 
-    def keys(self):
+    def keys(self) -> list:
         """
         Returns observation variable names
 
