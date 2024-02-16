@@ -181,9 +181,20 @@ A component of uncertainty can be simply be deleted as,
 .. ipython:: python
    :okwarning:
 
-   del ds.unc["temperature"]["u_sys_temperature"]
+   del ds.unc["temperature"]["u_str_temperature"]
 
    # Check uncertainties
    ds.unc["temperature"].keys()
 
+Renaming Variables
+------------------
 
+The storage of uncertainty information is underpinned by variable attributes, which include referencing other variables (for example, which variables are the uncertainties associated with a particular observation variable). Because of this it is important, if renaming uncertainty variables, to use **obsarray**'s renaming functionality. This renames the uncertainty variable and safely updates attribute variable references. This is done as follows:
+
+
+.. ipython:: python
+   :okwarning:
+
+   print(ds.unc["temperature"])
+   ds = ds.unc["temperature"]["u_ran_temperature"].rename("u_noise")
+   print(ds.unc["temperature"])
