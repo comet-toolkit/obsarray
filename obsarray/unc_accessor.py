@@ -320,14 +320,10 @@ class Uncertainty:
         # populate with error-correlation matrices built be each error-correlation
         # parameterisation object
         for dim_err_corr in self.err_corr:
-            if np.all(
-                [
-                    dim in self._obj[self._unc_var_name][self._sli].dims
-                    for dim in dim_err_corr[1].dims
-                ]
-            ):
+            sliced_dims=dim_err_corr[1].get_sliced_dims_errcorr(self._sli)
+            if len(dim_err_corr[1].get_sliced_dims_errcorr(self._sli))>0:
                 err_corr_matrix.values = err_corr_matrix.values.dot(
-                    dim_err_corr[1].build_matrix(self._sli)
+                    dim_err_corr[1].build_dot_matrix(self._sli)
                 )
 
         return err_corr_matrix
