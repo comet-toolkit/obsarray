@@ -528,6 +528,15 @@ class TestUncertainty(unittest.TestCase):
         sli = self.ds.unc["temperature"]["u_ran_temperature"].expand_sli((0,))
         self.assertEqual((0, slice(None), slice(None)), sli)
 
+    def test_rename(self):
+        ds = self.ds.unc["temperature"]["u_ran_temperature"].rename("test")
+        self.assertTrue("test" in ds.keys())
+        self.assertTrue("u_ran_temperature" not in ds.keys())
+        self.assertCountEqual(
+            ds["temperature"].attrs["unc_comps"],
+            ["test", "u_str_temperature", "u_sys_temperature"],
+        )
+
     def test_err_corr(self):
 
         expected_err_corr = [
