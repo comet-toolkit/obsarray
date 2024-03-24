@@ -92,7 +92,9 @@ class TestFlagAccessor(unittest.TestCase):
             self.assertIsInstance(flag, obsarray.flag_accessor.FlagVariable)
             var_names.append(flag._flag_var_name)
 
-        self.assertCountEqual(var_names, ["temperature_flags", "general_flags", "time_flags"])
+        self.assertCountEqual(
+            var_names, ["temperature_flags", "general_flags", "time_flags"]
+        )
 
     def test_keys(self):
         self.assertCountEqual(

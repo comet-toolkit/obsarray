@@ -479,15 +479,17 @@ class TestVariableUncertainty(unittest.TestCase):
         self.ds.unc["temperature"][:, :, 0].systematic_unc()
         mock.assert_called_once_with(["u_sys_temperature"])
 
-    def test_total_err_corr_matrix(self, ):
+    def test_total_err_corr_matrix(
+        self,
+    ):
         tercm = self.ds.unc["temperature"].total_err_corr_matrix()
-        assert tercm.shape==(12,12)
-        tercm = self.ds.unc["temperature"][:,:,0].total_err_corr_matrix()
-        assert tercm.shape==(4,4)
-        tercm = self.ds.unc["temperature"][:,0,0:2].total_err_corr_matrix()
-        assert tercm.shape==(4,4)
-        tercm = self.ds.unc["temperature"][0,0,:].total_err_corr_matrix()
-        assert tercm.shape==(3,3)
+        assert tercm.shape == (12, 12)
+        tercm = self.ds.unc["temperature"][:, :, 0].total_err_corr_matrix()
+        assert tercm.shape == (4, 4)
+        tercm = self.ds.unc["temperature"][:, 0, 0:2].total_err_corr_matrix()
+        assert tercm.shape == (4, 4)
+        tercm = self.ds.unc["temperature"][0, 0, :].total_err_corr_matrix()
+        assert tercm.shape == (3, 3)
 
     def test_structured_err_corr_matrix(self):
         pass

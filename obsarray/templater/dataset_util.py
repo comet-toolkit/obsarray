@@ -259,8 +259,8 @@ class DatasetUtil:
             attributes=attributes,
         )
 
-        #initialise flags to zero (instead of fillvalue)
-        variable.values=0*variable.values
+        # initialise flags to zero (instead of fillvalue)
+        variable.values = 0 * variable.values
 
         # add flag attributes
         variable.attrs.update(DatasetUtil.pack_flag_attrs(meanings))
@@ -290,7 +290,7 @@ class DatasetUtil:
         )
 
         if flag_masks is None:
-            flag_masks = [2 ** i for i in range(0, n_masks)]
+            flag_masks = [2**i for i in range(0, n_masks)]
 
         flag_attrs["flag_masks"] = str(flag_masks)[1:-1]
 
@@ -333,7 +333,7 @@ class DatasetUtil:
 
         # check if variable for available flags
         max_n_flags = numpy.iinfo(dtype).bits
-        all_flag_masks = [2 ** i for i in range(0, max_n_flags)]
+        all_flag_masks = [2**i for i in range(0, max_n_flags)]
         available_flag_masks = list(set(all_flag_masks) - set(flag_masks))
 
         if not available_flag_masks:
@@ -435,7 +435,9 @@ class DatasetUtil:
         if fill_value is not None:
             encoding_dict.update({"_FillValue": fill_value})
         else:
-            encoding_dict.update({"_FillValue": DatasetUtil.get_default_fill_value(dtype)})
+            encoding_dict.update(
+                {"_FillValue": DatasetUtil.get_default_fill_value(dtype)}
+            )
 
         variable.encoding = encoding_dict
 

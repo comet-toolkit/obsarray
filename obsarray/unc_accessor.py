@@ -336,8 +336,8 @@ class Uncertainty:
         # populate with error-correlation matrices built be each error-correlation
         # parameterisation object
         for dim_err_corr in self.err_corr:
-            sliced_dims=dim_err_corr[1].get_sliced_dims_errcorr(self._sli)
-            if len(dim_err_corr[1].get_sliced_dims_errcorr(self._sli))>0:
+            sliced_dims = dim_err_corr[1].get_sliced_dims_errcorr(self._sli)
+            if len(dim_err_corr[1].get_sliced_dims_errcorr(self._sli)) > 0:
                 err_corr_matrix.values = err_corr_matrix.values.dot(
                     dim_err_corr[1].build_dot_matrix(self._sli)
                 )
@@ -518,7 +518,7 @@ class VariableUncertainty:
                 quadsum_unc += self[unc_var_name].abs_value ** 2.0
 
         if quadsum_unc is not None:
-            quadsum_unc = quadsum_unc ** 0.5
+            quadsum_unc = quadsum_unc**0.5
 
         return quadsum_unc
 

@@ -85,14 +85,18 @@ class TestBaseErrCorrForm(unittest.TestCase):
         basicerrcorr = self.BasicErrCorrForm(
             self.ds, "u_ran_temperature", ["x"], [], []
         )
-        dim_sizes=basicerrcorr.get_sliced_dim_sizes_uncvar((slice(None),0,slice(0,2,1)))
+        dim_sizes = basicerrcorr.get_sliced_dim_sizes_uncvar(
+            (slice(None), 0, slice(0, 2, 1))
+        )
         assert dim_sizes == {"x": 2, "time": 2}
 
     def test_get_sliced_dim_sizes_errcorr(self):
         basicerrcorr = self.BasicErrCorrForm(
             self.ds, "u_ran_temperature", ["x"], [], []
         )
-        dim_sizes = basicerrcorr.get_sliced_dim_sizes_errcorr((slice(None), 0, slice(0, 2, 1)))
+        dim_sizes = basicerrcorr.get_sliced_dim_sizes_errcorr(
+            (slice(None), 0, slice(0, 2, 1))
+        )
         assert dim_sizes == {"x": 2}
 
     def test_get_sliced_dims_errcorr(self):
@@ -112,7 +116,7 @@ class TestBaseErrCorrForm(unittest.TestCase):
             self.ds, "u_ran_temperature", ["x", "time"], [], []
         )
         shape = basicerrcorr.get_sliced_shape_errcorr((slice(None), 0, slice(0, 2, 1)))
-        assert shape == (2,2)
+        assert shape == (2, 2)
 
     def test_slice_flattened_matrix(self):
         basicerrcorr = self.BasicErrCorrForm(
@@ -121,7 +125,7 @@ class TestBaseErrCorrForm(unittest.TestCase):
 
         full_matrix = np.arange(144).reshape((12, 12))
         slice_matrix = basicerrcorr.slice_flattened_matrix(
-            full_matrix, (2,2,3), (slice(None), slice(None), 0)
+            full_matrix, (2, 2, 3), (slice(None), slice(None), 0)
         )
 
         exp_slice_matrix = np.array(
@@ -145,6 +149,7 @@ class TestBaseErrCorrForm(unittest.TestCase):
         )
 
         np.testing.assert_equal(slice_matrix, exp_slice_matrix)
+
 
 class TestRandomUnc(unittest.TestCase):
     def setUp(self) -> None:
@@ -197,8 +202,9 @@ class TestSystematicUnc(unittest.TestCase):
         x = self.build_matrix_1stdim()
         y = self.build_matrix_2nddim()
         time = self.build_matrix_3ddim()
-        print(x.dot(y),x,y)
+        print(x.dot(y), x, y)
         np.testing.assert_equal((x.dot(y)).dot(time), np.ones((12, 12)))
+
 
 if __name__ == "main":
     unittest.main()
