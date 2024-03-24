@@ -1,7 +1,7 @@
 """err_corr_forms - module for the defintion of error-correlation parameterisation forms"""
 
 import abc
-from typing import Callable, Type, Union
+from typing import Callable, Type, Union, List
 import numpy as np
 from comet_maths.linear_algebra.matrix_conversion import expand_errcorr_dims
 
@@ -69,61 +69,72 @@ class BaseErrCorrForm(abc.ABC):
         """Form name"""
         pass
 
-    def expand_dim_matrix(self, submatrix, submatrix_dim, sli):
+    def expand_dim_matrix(
+        self, submatrix: np.ndarray, submatrix_dim: Union[str, List[str]], sli: tuple
+    ):
         return expand_errcorr_dims(
             in_corr=submatrix,
             in_dim=submatrix_dim,
             out_dim=list(self._obj[self._unc_var_name][sli].dims),
-            dim_sizes=self.get_sliced_dim_sizes_uncvar(sli)
+            dim_sizes=self.get_sliced_dim_sizes_uncvar(sli),
         )
 
-    def get_sliced_dim_sizes_uncvar(self, sli) -> dict:
+    def get_sliced_dim_sizes_uncvar(self, sli: tuple) -> dict:
         """
-        return dictionary with sizes of sliced dimensions of unc variable, including all dimensions.
+        Return dictionary with sizes of sliced dimensions of unc variable, including all dimensions.
 
         :param sli: slice (tuple with slice for each dimension)
         :return: shape of included sliced dimensions
         """
         uncvar_dims = self._obj[self._unc_var_name][sli].dims
         uncvar_shape = self._obj[self._unc_var_name][sli].shape
-        return {uncvar_dims[idim]: uncvar_shape[idim] for idim in range(len(uncvar_dims))}
+        return {
+            uncvar_dims[idim]: uncvar_shape[idim] for idim in range(len(uncvar_dims))
+        }
 
-    def get_sliced_dim_sizes_errcorr(self, sli) -> dict:
+    def get_sliced_dim_sizes_errcorr(self, sli: tuple) -> dict:
         """
-        return dictionary with sizes of sliced dimensions of unc variable, including only dimensions which are included in the current error correlation form.
+        Return dictionary with sizes of sliced dimensions of unc variable, including only dimensions which are
+        included in the current error correlation form.
 
         :param sli: slice (tuple with slice for each dimension)
         :return: shape of included sliced dimensions
         """
-        uncvar_sizes=self.get_sliced_dim_sizes_uncvar(sli)
+        uncvar_sizes = self.get_sliced_dim_sizes_uncvar(sli)
         sliced_dims = self.get_sliced_dims_errcorr(sli)
 
         return {dim: uncvar_sizes[dim] for dim in sliced_dims}
 
-    def get_sliced_dims_errcorr(self, sli) -> list:
+    def get_sliced_dims_errcorr(self, sli: tuple) -> list:
         """
-        return dimensions which are within the slice and included in the current error correlation form.
+        Return dimensions which are within the slice and included in the current error correlation form.
 
         :param sli: slice (tuple with slice for each dimension)
         :return: list with sliced dimensions
         """
         all_dims = self._obj[self._unc_var_name].dims
-        return [all_dims[idim] for idim in range(len(all_dims)) if (isinstance(sli[idim],slice) and all_dims[idim] in self.dims)]
+        return [
+            all_dims[idim]
+            for idim in range(len(all_dims))
+            if (isinstance(sli[idim], slice) and all_dims[idim] in self.dims)
+        ]
 
-    def get_sliced_shape_errcorr(self, sli)->tuple:
+    def get_sliced_shape_errcorr(self, sli: tuple) -> tuple:
         """
         return shape of sliced uncertainty variable, including only dimensions which are included in the current error correlation form.
 
         :param sli: slice (tuple with slice for each dimension)
         :return: shape of included sliced dimensions
         """
-        uncvar_sizes=self.get_sliced_dim_sizes_uncvar(sli)
+        uncvar_sizes = self.get_sliced_dim_sizes_uncvar(sli)
         sliced_dims = self.get_sliced_dims_errcorr(sli)
 
         return tuple([uncvar_sizes[dim] for dim in sliced_dims])
 
-    def slice_full_cov(self, full_matrix, sli):
-        return self.slice_flattened_matrix(full_matrix,self._obj[self._unc_var_name].shape,sli)
+    def slice_full_cov(self, full_matrix: np.ndarrary, sli: tuple) -> np.ndarray:
+        return self.slice_flattened_matrix(
+            full_matrix, self._obj[self._unc_var_name].shape, sli
+        )
 
     def slice_flattened_matrix(self, flattened_matrix, variable_shape, sli):
         mask_array = np.ones(variable_shape, dtype=bool)
@@ -155,7 +166,9 @@ class BaseErrCorrForm(abc.ABC):
         :return: populated error-correlation matrix
         """
 
-        return self.expand_dim_matrix(self.build_matrix(sli), self.get_sliced_dims_errcorr(sli), sli)
+        return self.expand_dim_matrix(
+            self.build_matrix(sli), self.get_sliced_dims_errcorr(sli), sli
+        )
 
 
 def register_err_corr_form(form_name: str) -> Callable:
@@ -179,7 +192,7 @@ class RandomCorrelation(BaseErrCorrForm):
     form = "random"
     is_random = True
 
-    def build_matrix(self, sli):
+    def build_matrix(self, sli: tuple) -> np.ndarray:
         """
         Returns uncertainty effect error-correlation matrix, populated with error-correlation values defined
         in this parameterisation
@@ -204,7 +217,7 @@ class SystematicCorrelation(BaseErrCorrForm):
     form = "systematic"
     is_systematic = True
 
-    def build_matrix(self, sli):
+    def build_matrix(self, sli: tuple) -> np.ndarray:
         """
         Returns uncertainty effect error-correlation matrix, populated with error-correlation values defined
         in this parameterisation
@@ -228,7 +241,7 @@ class ErrCorrMatrixCorrelation(BaseErrCorrForm):
 
     form = "err_corr_matrix"
 
-    def build_matrix(self, sli):
+    def build_matrix(self, sli: tuple) -> np.ndarray:
         """
         Returns uncertainty effect error-correlation matrix, populated with error-correlation values defined
         in this parameterisation
@@ -241,11 +254,21 @@ class ErrCorrMatrixCorrelation(BaseErrCorrForm):
         all_dims = self._obj[self._unc_var_name].dims
         all_dims_sizes = self._obj.sizes
 
-        sli_submatrix = tuple([sli[i] for i in range(len(all_dims)) if all_dims[i] in self.dims])
+        sli_submatrix = tuple(
+            [sli[i] for i in range(len(all_dims)) if all_dims[i] in self.dims]
+        )
 
-        sliced_shape = tuple([all_dims_sizes[all_dims[i]] for i in range(len(all_dims)) if all_dims[i] in self.dims])
+        sliced_shape = tuple(
+            [
+                all_dims_sizes[all_dims[i]]
+                for i in range(len(all_dims))
+                if all_dims[i] in self.dims
+            ]
+        )
 
-        submatrix = self.slice_flattened_matrix(self._obj[self.params[0]],sliced_shape,sli_submatrix)
+        submatrix = self.slice_flattened_matrix(
+            self._obj[self.params[0]], sliced_shape, sli_submatrix
+        )
 
         return submatrix
 
@@ -255,7 +278,7 @@ class EnsembleCorrelation(BaseErrCorrForm):
 
     form = "ensemble"
 
-    def build_matrix(self, sli):
+    def build_matrix(self, sli: tuple) -> np.ndarray:
         """
         Returns uncertainty effect error-correlation matrix, populated with error-correlation values defined
         in this parameterisation
