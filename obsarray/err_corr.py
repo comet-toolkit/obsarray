@@ -131,7 +131,7 @@ class BaseErrCorrForm(abc.ABC):
 
         return tuple([uncvar_sizes[dim] for dim in sliced_dims])
 
-    def slice_full_cov(self, full_matrix: np.ndarrary, sli: tuple) -> np.ndarray:
+    def slice_full_cov(self, full_matrix: np.ndarray, sli: tuple) -> np.ndarray:
         return self.slice_flattened_matrix(
             full_matrix, self._obj[self._unc_var_name].shape, sli
         )
