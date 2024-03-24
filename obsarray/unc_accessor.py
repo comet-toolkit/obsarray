@@ -92,6 +92,20 @@ class Uncertainty:
 
         return out_sli
 
+    def rename(self, name) -> xr.Dataset:
+        """
+        Renames uncertainty variable and safely updates variable name references in obs variable metadata
+        :param name: desired name
+        :returns: dataset with safely renamed variable
+        """
+        self._obj = self._obj.rename({self._unc_var_name: name})
+        self._obj[self._var_name].attrs["unc_comps"] = [
+            v.replace(self._unc_var_name, name)
+            for v in self._obj[self._var_name].attrs["unc_comps"]
+        ]
+
+        return self._obj
+
     @property
     def err_corr(self) -> List[Tuple[Union[str, List[str]], BaseErrCorrForm]]:
         """
@@ -105,7 +119,9 @@ class Uncertainty:
         # Find dimensions in variable slice
         sli_dims = [
             dim
-            for dim, idx in zip(self._obj.dims.keys(), self._sli)  # Due to hit a FutureDeprecation warning
+            for dim, idx in zip(
+                self._obj.dims.keys(), self._sli
+            )  # Due to hit a FutureDeprecation warning
             if not isinstance(idx, int)
         ]
 
