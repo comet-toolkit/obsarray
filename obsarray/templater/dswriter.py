@@ -81,7 +81,8 @@ class DSWriter:
                         )
                     }
                 )
-                ds[var_name].attrs.pop("_FillValue")
+                if "_FillValue" in ds[var_name].attrs:
+                    ds[var_name].attrs.pop("_FillValue")
             encoding.update({var_name: var_encoding})
 
         ds.to_netcdf(path, format="netCDF4", engine="netcdf4", encoding=encoding)

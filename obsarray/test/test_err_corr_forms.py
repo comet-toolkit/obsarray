@@ -81,6 +81,59 @@ class TestBaseErrCorrForm(unittest.TestCase):
 
         np.testing.assert_equal(full_matrix, slice_matrix)
 
+    def test_get_sliced_dim_sizes_uncvar(self):
+        basicerrcorr = self.BasicErrCorrForm(
+            self.ds, "u_ran_temperature", ["x"], [], []
+        )
+        dim_sizes = basicerrcorr.get_sliced_dim_sizes_uncvar(
+            (slice(None), 0, slice(0, 2, 1))
+        )
+        assert dim_sizes == {"x": 2, "time": 2}
+
+    def test_get_sliced_dim_sizes_errcorr(self):
+        basicerrcorr = self.BasicErrCorrForm(
+            self.ds, "u_ran_temperature", ["x"], [], []
+        )
+        dim_sizes = basicerrcorr.get_sliced_dim_sizes_errcorr(
+            (slice(None), 0, slice(0, 2, 1))
+        )
+        assert dim_sizes == {"x": 2}
+
+    def test_get_sliced_dims_errcorr(self):
+        basicerrcorr = self.BasicErrCorrForm(
+            self.ds, "u_ran_temperature", ["x"], [], []
+        )
+        dims = basicerrcorr.get_sliced_dims_errcorr((slice(None), 0, slice(0, 2, 1)))
+        assert dims == ["x"]
+
+    def test_get_sliced_shape_errcorr(self):
+        basicerrcorr = self.BasicErrCorrForm(
+            self.ds, "u_ran_temperature", ["x"], [], []
+        )
+        shape = basicerrcorr.get_sliced_shape_errcorr((slice(None), 0, slice(0, 2, 1)))
+        assert shape == (2,)
+        basicerrcorr = self.BasicErrCorrForm(
+            self.ds, "u_ran_temperature", ["x", "time"], [], []
+        )
+        shape = basicerrcorr.get_sliced_shape_errcorr((slice(None), 0, slice(0, 2, 1)))
+        assert shape == (2, 2)
+
+    def test_slice_flattened_matrix(self):
+        basicerrcorr = self.BasicErrCorrForm(
+            self.ds, "u_ran_temperature", ["x"], [], []
+        )
+
+        full_matrix = np.arange(144).reshape((12, 12))
+        slice_matrix = basicerrcorr.slice_flattened_matrix(
+            full_matrix, (2, 2, 3), (slice(None), slice(None), 0)
+        )
+
+        exp_slice_matrix = np.array(
+            [[0, 3, 6, 9], [36, 39, 42, 45], [72, 75, 78, 81], [108, 111, 114, 117]]
+        )
+
+        np.testing.assert_equal(slice_matrix, exp_slice_matrix)
+
     def test_slice_full_cov_slice(self):
         basicerrcorr = self.BasicErrCorrForm(
             self.ds, "u_ran_temperature", ["x"], [], []
@@ -105,14 +158,14 @@ class TestRandomUnc(unittest.TestCase):
     def test_build_matrix_1stdim(self):
         rc = RandomCorrelation(self.ds, "u_ran_temperature", ["x"], [], [])
 
-        ecrm = rc.build_matrix((slice(None), slice(None), slice(None)))
+        ecrm = rc.build_dot_matrix((slice(None), slice(None), slice(None)))
 
         np.testing.assert_equal(ecrm, np.eye(12))
 
     def test_build_matrix_2nddim(self):
         rc = RandomCorrelation(self.ds, "u_ran_temperature", ["y"], [], [])
 
-        ecrm = rc.build_matrix((slice(None), slice(None), slice(None)))
+        ecrm = rc.build_dot_matrix((slice(None), slice(None), slice(None)))
 
         np.testing.assert_equal(ecrm, np.eye(12))
 
@@ -124,7 +177,7 @@ class TestSystematicUnc(unittest.TestCase):
     def build_matrix_1stdim(self):
         rc = SystematicCorrelation(self.ds, "u_sys_temperature", ["x"], [], [])
 
-        ecrm = rc.build_matrix((slice(None), slice(None), slice(None)))
+        ecrm = rc.build_dot_matrix((slice(None), slice(None), slice(None)))
         # np.testing.assert_equal(ecrm, np.ones((12, 12)))
 
         return ecrm
@@ -132,7 +185,7 @@ class TestSystematicUnc(unittest.TestCase):
     def build_matrix_2nddim(self):
         rc = SystematicCorrelation(self.ds, "u_sys_temperature", ["y"], [], [])
 
-        ecrm = rc.build_matrix((slice(None), slice(None), slice(None)))
+        ecrm = rc.build_dot_matrix((slice(None), slice(None), slice(None)))
         # np.testing.assert_equal(ecrm, np.ones((12, 12)))
 
         return ecrm
@@ -140,15 +193,16 @@ class TestSystematicUnc(unittest.TestCase):
     def build_matrix_3ddim(self):
         rc = SystematicCorrelation(self.ds, "u_sys_temperature", ["time"], [], [])
 
-        ecrm = rc.build_matrix((slice(None), slice(None), slice(None)))
+        ecrm = rc.build_dot_matrix((slice(None), slice(None), slice(None)))
         # np.testing.assert_equal(ecrm, np.ones((12, 12)))
 
         return ecrm
 
-    def test_build_matrix(self):
+    def test_build_dot_matrix(self):
         x = self.build_matrix_1stdim()
         y = self.build_matrix_2nddim()
         time = self.build_matrix_3ddim()
+        print(x.dot(y), x, y)
         np.testing.assert_equal((x.dot(y)).dot(time), np.ones((12, 12)))
 
 

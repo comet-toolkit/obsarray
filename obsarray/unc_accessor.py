@@ -321,22 +321,6 @@ class Uncertainty:
                     )
         return err_corr_dict
 
-    def err_corr_dict_numdim(self) -> dict:
-        """
-        Error-correlation dictionary for uncertainty effect, where the keys are the dimension index rather than dimension name.
-
-        :return: dictionary with error-correlation for each dimension
-        """
-        # initialise error-correlation dictionary
-        err_corr_dict = self.err_corr_dict()
-        err_corr_dict_numdim = {}
-
-        for idim, dim in enumerate(self._obj.dims):
-            if dim in err_corr_dict.keys():
-                err_corr_dict_numdim[str(idim)] = err_corr_dict[dim]
-
-        return err_corr_dict_numdim
-
     def err_corr_matrix(self) -> xr.DataArray:
         """
         Error-correlation matrix for uncertainty effect.
@@ -352,14 +336,10 @@ class Uncertainty:
         # populate with error-correlation matrices built be each error-correlation
         # parameterisation object
         for dim_err_corr in self.err_corr:
-            if np.all(
-                [
-                    dim in self._obj[self._unc_var_name][self._sli].dims
-                    for dim in dim_err_corr[1].dims
-                ]
-            ):
+            sliced_dims = dim_err_corr[1].get_sliced_dims_errcorr(self._sli)
+            if len(dim_err_corr[1].get_sliced_dims_errcorr(self._sli)) > 0:
                 err_corr_matrix.values = err_corr_matrix.values.dot(
-                    dim_err_corr[1].build_matrix(self._sli)
+                    dim_err_corr[1].build_dot_matrix(self._sli)
                 )
 
         return err_corr_matrix
@@ -538,7 +518,7 @@ class VariableUncertainty:
                 quadsum_unc += self[unc_var_name].abs_value ** 2.0
 
         if quadsum_unc is not None:
-            quadsum_unc = quadsum_unc ** 0.5
+            quadsum_unc = quadsum_unc**0.5
 
         return quadsum_unc
 
@@ -840,7 +820,6 @@ class UncAccessor(object):
         """
 
         unc_var_names = self._var_unc_var_names(obs_var_name, unc_type=unc_type)
-
         if len(unc_var_names) == 0:
             return None
 

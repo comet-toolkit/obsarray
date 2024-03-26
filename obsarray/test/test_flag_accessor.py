@@ -60,7 +60,7 @@ def create_ds():
     )
 
     ds["time_flags"] = create_var(
-        "temperature_flags",
+        "time_flags",
         {
             "dtype": "flag",
             "dim": ["time"],
@@ -83,7 +83,7 @@ class TestFlagAccessor(unittest.TestCase):
         self.assertEqual(self.ds.flag["general_flag"]._flag_var_name, "general_flag")
 
     def test___len__(self):
-        self.assertEqual(len(self.ds.flag), 2)
+        self.assertEqual(len(self.ds.flag), 3)
 
     def test___iter__(self):
 
@@ -92,11 +92,13 @@ class TestFlagAccessor(unittest.TestCase):
             self.assertIsInstance(flag, obsarray.flag_accessor.FlagVariable)
             var_names.append(flag._flag_var_name)
 
-        self.assertCountEqual(var_names, ["temperature_flags", "general_flags"])
+        self.assertCountEqual(
+            var_names, ["temperature_flags", "general_flags", "time_flags"]
+        )
 
     def test_keys(self):
         self.assertCountEqual(
-            self.ds.flag.keys(), ["temperature_flags", "general_flags"]
+            self.ds.flag.keys(), ["temperature_flags", "general_flags", "time_flags"]
         )
 
     def test__is_data_var_true(self):
@@ -117,7 +119,7 @@ class TestFlagAccessor(unittest.TestCase):
         self.assertEqual(type(flag_vars), xr.core.dataset.DataVariables)
         self.assertCountEqual(
             list(flag_vars.variables),
-            ["temperature_flags", "general_flags"],
+            ["temperature_flags", "general_flags", "time_flags"],
         )
 
     def test__is_flag_var_true(self):

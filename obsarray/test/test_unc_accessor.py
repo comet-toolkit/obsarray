@@ -117,6 +117,11 @@ def create_ds():
         },
     )
 
+    ds["err_corr_str_temperature"] = (
+        ["x", "x"],
+        np.eye(temperature.shape[0]),
+    )
+
     return ds
 
 
@@ -474,13 +479,17 @@ class TestVariableUncertainty(unittest.TestCase):
         self.ds.unc["temperature"][:, :, 0].systematic_unc()
         mock.assert_called_once_with(["u_sys_temperature"])
 
-    @patch(
-        "obsarray.unc_accessor.Uncertainty.err_corr_matrix",
-        return_value=xr.DataArray(np.ones((12, 12)), dims=["x.y.time", "x.y.time"]),
-    )
-    def test_total_err_corr_matrix(self, mock_err_corr_matrix):
-        pass
-        # tercm = self.ds.unc["temperature"].total_err_corr_matrix()
+    def test_total_err_corr_matrix(
+        self,
+    ):
+        tercm = self.ds.unc["temperature"].total_err_corr_matrix()
+        assert tercm.shape == (12, 12)
+        tercm = self.ds.unc["temperature"][:, :, 0].total_err_corr_matrix()
+        assert tercm.shape == (4, 4)
+        tercm = self.ds.unc["temperature"][:, 0, 0:2].total_err_corr_matrix()
+        assert tercm.shape == (4, 4)
+        tercm = self.ds.unc["temperature"][0, 0, :].total_err_corr_matrix()
+        assert tercm.shape == (3, 3)
 
     def test_structured_err_corr_matrix(self):
         pass
@@ -496,7 +505,7 @@ class TestUncertainty(unittest.TestCase):
     def setUp(self):
         self.ds = create_ds()
 
-    @patch("obsarray.unc_accessor.Uncertainty.expand_sli", return_value="slice")
+    @patch("obsarray.unc_accessor.Uncertainty._expand_sli", return_value="slice")
     def test___getitem__(self, m):
         self.assertEqual(
             self.ds.unc["temperature"]["u_ran_temperature"]["in_slice"]._sli, "slice"
@@ -513,19 +522,19 @@ class TestUncertainty(unittest.TestCase):
     def test_expand_slice_1d_None(self):
         self.ds["new"] = (["time"], np.ones(3), {})
         self.ds.unc["new"]["u_new"] = (["time"], np.ones(3), {})
-        sli = self.ds.unc["temperature"]["u_ran_temperature"]._expand_sli()
+        sli = self.ds.unc["new"]["u_new"]._expand_sli()
         self.assertEqual((slice(None),), sli)
 
     def test_expand_slice_full(self):
-        sli = self.ds.unc["temperature"]["u_ran_temperature"].expand_sli((1, 1, 1))
+        sli = self.ds.unc["temperature"]["u_ran_temperature"]._expand_sli((1, 1, 1))
         self.assertEqual((1, 1, 1), sli)
 
     def test_expand_slice_None(self):
-        sli = self.ds.unc["temperature"]["u_ran_temperature"].expand_sli()
+        sli = self.ds.unc["temperature"]["u_ran_temperature"]._expand_sli()
         self.assertEqual((slice(None), slice(None), slice(None)), sli)
 
     def test_expand_slice_first(self):
-        sli = self.ds.unc["temperature"]["u_ran_temperature"].expand_sli((0,))
+        sli = self.ds.unc["temperature"]["u_ran_temperature"]._expand_sli((0,))
         self.assertEqual((0, slice(None), slice(None)), sli)
 
     def test_rename(self):
