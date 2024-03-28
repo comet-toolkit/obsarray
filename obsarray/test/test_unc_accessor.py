@@ -98,17 +98,12 @@ def create_ds():
             "units": "K",
             "err_corr": [
                 {
-                    "dim": "x",
+                    "dim": ["x", "time"],
                     "form": "err_corr_matrix",
                     "params": ["err_corr_str_temperature"],
                 },
                 {
                     "dim": "y",
-                    "form": "systematic",
-                    "params": [],
-                },
-                {
-                    "dim": "time",
                     "form": "systematic",
                     "params": [],
                 },
@@ -118,8 +113,13 @@ def create_ds():
     )
 
     ds["err_corr_str_temperature"] = (
-        ["x", "x"],
-        np.eye(temperature.shape[0]),
+        ["x.time", "x.time"],
+        np.ones(
+            (
+                temperature.shape[0] * temperature.shape[2],
+                temperature.shape[0] * temperature.shape[2],
+            )
+        ),
     )
 
     return ds

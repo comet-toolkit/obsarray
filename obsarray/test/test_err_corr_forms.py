@@ -7,6 +7,7 @@ from obsarray.err_corr import (
     ErrCorrForms,
     RandomCorrelation,
     SystematicCorrelation,
+    ErrCorrMatrixCorrelation,
 )
 from obsarray.test.test_unc_accessor import create_ds
 
@@ -65,9 +66,17 @@ class TestBaseErrCorrForm(unittest.TestCase):
             form = "basic"
 
             def build_matrix(self, sli):
-                return None
+                full_matrix = np.arange(144).reshape((12, 12))
+                return self.slice_errcorr_matrix(full_matrix, (2, 2, 3), sli)
 
         self.BasicErrCorrForm = BasicErrCorrForm
+
+    def test_get_varshape_errcorr(self):
+        basicerrcorr = self.BasicErrCorrForm(
+            self.ds, "u_ran_temperature", ["x", "y", "time"], [], []
+        )
+        shape = basicerrcorr.get_varshape_errcorr()
+        np.testing.assert_equal(shape, (2, 2, 3))
 
     def test_slice_full_cov_full(self):
         basicerrcorr = self.BasicErrCorrForm(
@@ -75,8 +84,8 @@ class TestBaseErrCorrForm(unittest.TestCase):
         )
 
         full_matrix = np.arange(144).reshape((12, 12))
-        slice_matrix = basicerrcorr.slice_full_cov(
-            full_matrix, (slice(None), slice(None), slice(None))
+        slice_matrix = basicerrcorr.build_matrix(
+            (slice(None), slice(None), slice(None))
         )
 
         np.testing.assert_equal(full_matrix, slice_matrix)
@@ -118,13 +127,13 @@ class TestBaseErrCorrForm(unittest.TestCase):
         shape = basicerrcorr.get_sliced_shape_errcorr((slice(None), 0, slice(0, 2, 1)))
         assert shape == (2, 2)
 
-    def test_slice_flattened_matrix(self):
+    def test_slice_errcorr_matrix(self):
         basicerrcorr = self.BasicErrCorrForm(
-            self.ds, "u_ran_temperature", ["x"], [], []
+            self.ds, "u_ran_temperature", ["x", "y", "z"], [], []
         )
 
         full_matrix = np.arange(144).reshape((12, 12))
-        slice_matrix = basicerrcorr.slice_flattened_matrix(
+        slice_matrix = basicerrcorr.slice_errcorr_matrix(
             full_matrix, (2, 2, 3), (slice(None), slice(None), 0)
         )
 
@@ -136,13 +145,10 @@ class TestBaseErrCorrForm(unittest.TestCase):
 
     def test_slice_full_cov_slice(self):
         basicerrcorr = self.BasicErrCorrForm(
-            self.ds, "u_ran_temperature", ["x"], [], []
+            self.ds, "u_ran_temperature", ["x", "y", "z"], [], []
         )
 
-        full_matrix = np.arange(144).reshape((12, 12))
-        slice_matrix = basicerrcorr.slice_full_cov(
-            full_matrix, (slice(None), slice(None), 0)
-        )
+        slice_matrix = basicerrcorr.build_dot_matrix((slice(None), slice(None), 0))
 
         exp_slice_matrix = np.array(
             [[0, 3, 6, 9], [36, 39, 42, 45], [72, 75, 78, 81], [108, 111, 114, 117]]
@@ -204,6 +210,41 @@ class TestSystematicUnc(unittest.TestCase):
         time = self.build_matrix_3ddim()
         print(x.dot(y), x, y)
         np.testing.assert_equal((x.dot(y)).dot(time), np.ones((12, 12)))
+
+
+class TestErrCorrMatrixCorrelation(unittest.TestCase):
+    def setUp(self) -> None:
+        self.ds = create_ds()
+
+    def test_build_matrix_full(self):
+        ec = ErrCorrMatrixCorrelation(
+            self.ds,
+            "u_str_temperature",
+            ["x", "time"],
+            ["err_corr_str_temperature"],
+            [],
+        )
+
+        ecrm = ec.build_matrix((slice(None), slice(None), slice(None)))
+        np.testing.assert_equal(ecrm, np.ones((6, 6)))
+
+    def test_build_matrix_sliced(self):
+        ec = ErrCorrMatrixCorrelation(
+            self.ds,
+            "u_str_temperature",
+            ["x", "time"],
+            ["err_corr_str_temperature"],
+            [],
+        )
+
+        ecrm = ec.build_matrix((0, slice(None), slice(None)))
+        np.testing.assert_equal(ecrm, np.ones((3, 3)))
+
+        ecrm = ec.build_matrix((slice(None), 0, slice(None)))
+        np.testing.assert_equal(ecrm, np.ones((6, 6)))
+
+        ecrm = ec.build_matrix((slice(None), slice(None), 0))
+        np.testing.assert_equal(ecrm, np.ones((2, 2)))
 
 
 if __name__ == "main":
