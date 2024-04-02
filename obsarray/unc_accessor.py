@@ -877,7 +877,8 @@ class UncAccessor(object):
                     self._obj[obs_var].attrs["unc_comps"]
                 ]
 
-            self._obj[obs_var].attrs["unc_comps"].append(unc_var)
+            if unc_var not in self._obj[obs_var].attrs["unc_comps"]:
+                self._obj[obs_var].attrs["unc_comps"].append(unc_var)
 
         else:
             self._obj[obs_var].attrs["unc_comps"] = unc_var
