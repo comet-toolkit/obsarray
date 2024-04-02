@@ -354,7 +354,7 @@ class Uncertainty:
         err_cov_matrix = empty_err_corr_matrix(self._obj[self._unc_var_name][self._sli])
 
         err_cov_matrix.values = convert_corr_to_cov(
-            self.err_corr_matrix().values, self.value.values
+            self.err_corr_matrix().values, self.abs_value.values
         )
 
         return err_cov_matrix
