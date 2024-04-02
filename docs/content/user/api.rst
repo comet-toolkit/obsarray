@@ -49,7 +49,6 @@ Uncertainty functions
    unc_accessor.VariableUncertainty.structured_err_cov_matrix
    unc_accessor.Uncertainty
    unc_accessor.Uncertainty.err_corr_dict
-   unc_accessor.Uncertainty.err_corr_dict_numdim
    unc_accessor.Uncertainty.err_corr_matrix
    unc_accessor.Uncertainty.err_cov_matrix
    unc_accessor.Uncertainty.abs_value
