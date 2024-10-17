@@ -25,7 +25,7 @@ setup(
     description="Measurement data handling in Python",
     long_description=read("README.md"),
     packages=find_packages(exclude=("tests",)),
-    install_requires=["numpy==1.6.5", "xarray", "comet_maths"],
+    install_requires=["comet_maths", "netcdf4==1.6.5", "xarray"],
     extras_require={
         "dev": [
             "pre-commit",
