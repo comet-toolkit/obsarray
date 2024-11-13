@@ -1,6 +1,5 @@
 """obsarray.concat - module with extension to xarray.concat for obs_vars and unc_vars"""
 
-import numpy as np
 import xarray as xr
 from typing import Union, Any
 from xarray.core.types import T_Dataset, T_DataArray, T_Variable
@@ -21,6 +20,8 @@ def obs_concat(
     **kwargs
 ):
     """
+    **NB: THIS FUNCTION IS NOT CURRENTLY IMPLEMENTED AND JUST ACTS AS A WRAPPER FOR XR.CONCAT**
+
     Concatenate xarray *obs_vars* along a new or existing dimension, safely handling also
     concatenating associated *unc_vars*. Extension to :py:func:`xarray.concat`.
 
@@ -45,8 +46,6 @@ def obs_concat(
     concat_obs_vars = xr.concat(objs, dim, *args, **kwargs)
     concat_unc_vars = None
     return concat_obs_vars, concat_unc_vars
-
-
 
 
 if __name__ == "__main__":
