@@ -895,7 +895,6 @@ class UncAccessor(object):
         del self._obj[unc_var]
         self._obj[obs_var].attrs["unc_comps"].remove(unc_var)
 
-
     def rename(self, vars_dict: dict[str, str]) -> T_Dataset:
         """
         Returns a new dataset with renamed variables - safely handling `unc_vars` and related metadata
@@ -905,7 +904,11 @@ class UncAccessor(object):
         """
 
         # handle case that xarray.Dataset.rename renames the dimension associated with a renamed coordinate dimension
-        coord_dim_dict = {str(dim): vars_dict[dim] for dim in self._obj.dims if (dim in self._obj.coords) and (dim in vars_dict.keys())}
+        coord_dim_dict = {
+            str(dim): vars_dict[dim]
+            for dim in self._obj.dims
+            if (dim in self._obj.coords) and (dim in vars_dict.keys())
+        }
         ds = self.rename_dims(coord_dim_dict)
 
         # update metadata where unc_var err corr param to be renamed
@@ -931,8 +934,12 @@ class UncAccessor(object):
                 ds = ds.unc[obs_var_i][unc_var_i].rename(vars_dict[unc_var_i])
 
         # update remaining variable names
-        non_unc_var_names = list(filter(lambda x: x not in self.unc_vars.keys(), self._obj.variables.keys()))
-        var_dict_no_unc = {n: vars_dict[n] for n in non_unc_var_names if n in vars_dict.keys()}
+        non_unc_var_names = list(
+            filter(lambda x: x not in self.unc_vars.keys(), self._obj.variables.keys())
+        )
+        var_dict_no_unc = {
+            n: vars_dict[n] for n in non_unc_var_names if n in vars_dict.keys()
+        }
         ds = ds.rename(var_dict_no_unc)
 
         return ds
@@ -959,7 +966,9 @@ class UncAccessor(object):
                 if (attr[:9] == "err_corr_") and (attr[-4:] == "_dim"):
                     if isinstance(obj[unc_var_name].attrs[attr], str):
                         if obj[unc_var_name].attrs[attr] in dims_dict:
-                            obj[unc_var_name].attrs[attr] = dims_dict[obj[unc_var_name].attrs[attr]]
+                            obj[unc_var_name].attrs[attr] = dims_dict[
+                                obj[unc_var_name].attrs[attr]
+                            ]
 
                     if isinstance(obj[unc_var_name].attrs[attr], list):
                         for i, attr_i in enumerate(obj[unc_var_name].attrs[attr]):
@@ -967,8 +976,6 @@ class UncAccessor(object):
                                 obj[unc_var_name].attrs[attr][i] = dims_dict[attr_i]
 
         return obj
-
-
 
 
 if __name__ == "__main__":

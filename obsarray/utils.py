@@ -28,12 +28,12 @@ def empty_err_corr_matrix(obs_var: xr.DataArray):
 
 
 def append_names(
-        ds: T_Dataset,
-        suffix: str,
-        skip_vars: bool = False,
-        skip_dims: bool = False,
-        skip_attrs: bool = False
-    ) -> T_Dataset:
+    ds: T_Dataset,
+    suffix: str,
+    skip_vars: bool = False,
+    skip_dims: bool = False,
+    skip_attrs: bool = False,
+) -> T_Dataset:
     """
     Appends a suffix to the names of dataset variables, dimensions, and attributes - safely handling `unc_vars` and associated metadata
 
