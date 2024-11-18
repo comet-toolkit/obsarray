@@ -900,7 +900,7 @@ class UncAccessor(object):
         """
         Returns a new dataset with renamed variables - safely handling `unc_vars` and related metadata
 
-        :params vars_dict : Dictionary whose keys are current variable names and whose values are the desired names. The desired names must not be the name of an existing dimension or Variable in the Dataset.
+        :param vars_dict: Dictionary whose keys are current variable names and whose values are the desired names. The desired names must not be the name of an existing dimension or Variable in the Dataset.
         :returns: Dataset with renamed variables
         """
 
@@ -941,7 +941,7 @@ class UncAccessor(object):
         """
         Returns a new dataset with renamed dimensions - safely handling `unc_vars` related metadata
 
-        :params dims_dict : Dictionary whose keys are current dimension names and whose values are the desired names. The desired names must not be the name of an existing dimension or Variable in the Dataset.
+        :param dims_dict: Dictionary whose keys are current dimension names and whose values are the desired names. The desired names must not be the name of an existing dimension or Variable in the Dataset.
         :returns: Dataset with renamed dimensions
         """
 
