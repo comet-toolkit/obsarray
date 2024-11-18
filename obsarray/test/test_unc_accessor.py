@@ -34,7 +34,7 @@ def compare_err_corr_form(self, form, exp_form):
     self.assertCountEqual(form._unc_var_name, exp_form._unc_var_name)
 
 
-def create_ds(dim_suffix=""):
+def create_ds(var_suffix="", dim_suffix="", coord_dim_suffix_extra = ""):
     np.random.seed(0)
     temperature = 15 + 8 * np.random.randn(2, 2, 3)
     u_r_temperature = temperature * 0.02
@@ -47,26 +47,26 @@ def create_ds(dim_suffix=""):
     reference_time = pd.Timestamp("2014-09-05")
 
     ds = xr.Dataset(
-        data_vars=dict(
-            temperature=(["x" + dim_suffix, "y" + dim_suffix, "time" + dim_suffix], temperature, {"units": "K"}),
-        ),
-        coords=dict(
-            lon=(["x" + dim_suffix, "y" + dim_suffix], lon),
-            lat=(["x" + dim_suffix, "y" + dim_suffix], lat),
-            time=("time" + dim_suffix, time),
-            reference_time=reference_time,
-        ),
+        data_vars={
+            "temperature" + var_suffix: (["x" + dim_suffix, "y" + dim_suffix, "time" + dim_suffix + coord_dim_suffix_extra], temperature, {"units": "K"}),
+        },
+        coords={
+            "lon" + var_suffix: (["x" + dim_suffix, "y" + dim_suffix], lon),
+            "lat" + var_suffix: (["x" + dim_suffix, "y" + dim_suffix], lat),
+            "time" + var_suffix: ("time" + dim_suffix + coord_dim_suffix_extra, time),
+            "reference_time": reference_time,
+    },
         attrs=dict(description="Weather related data."),
     )
 
-    ds.unc["temperature"]["u_ran_temperature"] = (
-        ["x" + dim_suffix, "y" + dim_suffix, "time" + dim_suffix],
+    ds.unc["temperature" + var_suffix]["u_ran_temperature" + var_suffix] = (
+        ["x" + dim_suffix, "y" + dim_suffix, "time" + dim_suffix + coord_dim_suffix_extra],
         temperature * 0.05,
         {"units": "K", "pdf_shape": "gaussian"},
     )
 
-    ds.unc["temperature"]["u_sys_temperature"] = (
-        ["x" + dim_suffix, "y" + dim_suffix, "time" + dim_suffix],
+    ds.unc["temperature" + var_suffix]["u_sys_temperature" + var_suffix] = (
+        ["x" + dim_suffix, "y" + dim_suffix, "time" + dim_suffix + coord_dim_suffix_extra],
         temperature * 0.03,
         {
             "units": "K",
@@ -82,7 +82,7 @@ def create_ds(dim_suffix=""):
                     "params": [],
                 },
                 {
-                    "dim": "time" + dim_suffix,
+                    "dim": "time" + dim_suffix + coord_dim_suffix_extra,
                     "form": "systematic",
                     "params": [],
                 },
@@ -91,16 +91,16 @@ def create_ds(dim_suffix=""):
         },
     )
 
-    ds.unc["temperature"]["u_str_temperature"] = (
-        ["x" + dim_suffix, "y" + dim_suffix, "time" + dim_suffix],
+    ds.unc["temperature" + var_suffix]["u_str_temperature" + var_suffix] = (
+        ["x" + dim_suffix, "y" + dim_suffix, "time" + dim_suffix + coord_dim_suffix_extra],
         temperature * 0.1,
         {
             "units": "K",
             "err_corr": [
                 {
-                    "dim": ["x" + dim_suffix, "time" + dim_suffix],
+                    "dim": ["x" + dim_suffix, "time" + dim_suffix + coord_dim_suffix_extra],
                     "form": "err_corr_matrix",
-                    "params": ["err_corr_str_temperature"],
+                    "params": ["err_corr_str_temperature" + var_suffix],
                 },
                 {
                     "dim": "y" + dim_suffix,
@@ -112,7 +112,7 @@ def create_ds(dim_suffix=""):
         },
     )
 
-    ds["err_corr_str_temperature"] = (
+    ds["err_corr_str_temperature" + var_suffix] = (
         ["x.time" + dim_suffix, "x.time" + dim_suffix],
         np.ones(
             (
@@ -740,6 +740,15 @@ class TestUncertainty(unittest.TestCase):
         exp_ecm = xr.DataArray(np.ones((12, 12)), dims=["x.y.time", "x.y.time"])
         xr.testing.assert_equal(ecm, exp_ecm)
 
+    def test_rename_vars(self):
+        var_suffix = "_test"
+        input_ds = create_ds()
+
+        ds = input_ds.unc.rename({"temperature": "temperature" + var_suffix, "lon": "lon" + var_suffix, "lat": "lat" + var_suffix, "time": "time" + var_suffix, "u_ran_temperature": "u_ran_temperature"  + var_suffix, "u_str_temperature": "u_str_temperature"  + var_suffix, "u_sys_temperature": "u_sys_temperature"  + var_suffix, "err_corr_str_temperature": "err_corr_str_temperature" + var_suffix})
+
+        exp_ds = create_ds(var_suffix=var_suffix, coord_dim_suffix_extra=var_suffix)
+
+        xr.testing.assert_identical(ds, exp_ds)
 
     def test_rename_dims(self):
         dim_suffix = "_test"
