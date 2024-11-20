@@ -454,15 +454,15 @@ class DatasetUtil:
         if dtype == numpy.int8:
             return numpy.int8(-127)
         if dtype == numpy.uint8:
-            return numpy.uint8(-1)
+            return numpy.iinfo(np.uint8).max
         elif dtype == numpy.int16:
             return numpy.int16(-32767)
         elif dtype == numpy.uint16:
-            return numpy.uint16(-1)
+            return numpy.iinfo(np.uint16).max
         elif dtype == numpy.int32:
             return numpy.int32(-2147483647)
         elif dtype == numpy.uint32:
-            return numpy.uint32(-1)
+            return numpy.iinfo(np.uint32).max
         elif dtype == numpy.int64:
             return numpy.int64(-9223372036854775806)
         elif dtype == numpy.float32:
