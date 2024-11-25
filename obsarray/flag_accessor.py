@@ -83,8 +83,8 @@ class Flag:
                 )
             else:
                 self._obj[self._flag_var_name].values[self._sli] = (
-                    self._obj[self._flag_var_name][self._sli].values & ~flag_mask
-                )
+                    self._obj[self._flag_var_name][self._sli].values & np.array(~flag_mask)
+                ).astype(self._obj[self._flag_var_name].values[self._sli].dtype)
 
         # else apply mask
         else:
@@ -99,8 +99,8 @@ class Flag:
             )
 
             self._obj[self._flag_var_name][self._sli].values[i_false] = np.array(
-                self._obj[self._flag_var_name][self._sli].values[i_false] & ~flag_mask
-            )
+                self._obj[self._flag_var_name][self._sli].values[i_false] & np.array(~flag_mask)
+            ).astype(self._obj[self._flag_var_name].values[self._sli].dtype)
 
     def _expand_sli(self, sli: Optional[tuple] = None) -> tuple:
         """
