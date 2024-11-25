@@ -25,7 +25,7 @@ setup(
     description="Measurement data handling in Python",
     long_description=read("README.md"),
     packages=find_packages(exclude=("tests",)),
-    install_requires=["comet_maths", "netcdf4", "xarray"],
+    install_requires=["comet_maths", "netcdf4", "xarray", "numpy==2.*"],
     extras_require={
         "dev": [
             "pre-commit",
@@ -35,6 +35,7 @@ setup(
             "sphinx_book_theme",
             "ipython",
             "sphinx_autosummary_accessors",
+            "coverage",
         ]
     },
     classifiers=[
