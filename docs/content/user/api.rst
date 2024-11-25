@@ -30,6 +30,8 @@ Uncertainty functions
    unc_accessor.UncAccessor.unc_vars
    unc_accessor.UncAccessor.__getitem__
    unc_accessor.UncAccessor.keys
+   unc_accessor.UncAccessor.rename
+   unc_accessor.UncAccessor.rename_dims
    unc_accessor.VariableUncertainty
    unc_accessor.VariableUncertainty.__getitem__
    unc_accessor.VariableUncertainty.__setitem__
@@ -84,3 +86,11 @@ Flag functions
    flag_accessor.Flag.__getitem__
    flag_accessor.Flag.__setitem__
    flag_accessor.Flag.value
+
+Utility functions
+=================
+
+.. autosummary::
+   :toctree: generated/
+
+   utils.append_names
