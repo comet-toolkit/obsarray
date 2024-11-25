@@ -471,7 +471,7 @@ class TestDatasetUtil(unittest.TestCase):
 
         self.assertEqual(-127, DatasetUtil.get_default_fill_value(np.int8))
         self.assertEqual(-32767, DatasetUtil.get_default_fill_value(np.int16))
-        self.assertEqual(np.uint16(-1), DatasetUtil.get_default_fill_value(np.uint16))
+        self.assertEqual(np.array(-1).astype("uint16"), DatasetUtil.get_default_fill_value(np.uint16))
         self.assertEqual(-2147483647, DatasetUtil.get_default_fill_value(np.int32))
         self.assertEqual(
             -9223372036854775806, DatasetUtil.get_default_fill_value(np.int64)
