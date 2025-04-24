@@ -20,7 +20,6 @@ setup(
     name="obsarray",
     url="https://github.com/comet-toolkit/obsarray",
     license="GPLv3",
-    license_files=["LICENSE"],
     author="CoMet Toolkit Team",
     author_email="team@comet-toolkit.org",
     description="Measurement data handling in Python",
