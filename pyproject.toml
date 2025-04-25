@@ -1,3 +1,48 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "obsarray"
+dynamic = ["version"]
+description = "Measurement data handling in Python"
+authors = [
+  { name="CoMet Toolkit Team", email="team@comet-toolkit.org" }
+]
+readme = "README.md"
+license = { text = "GPLv3" }
+license-files = ["LICENSE"]
+requires-python = ">=3.8"
+dependencies = [
+  "comet_maths",
+  "netcdf4",
+  "xarray"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pre-commit",
+  "tox",
+  "sphinx",
+  "sphinx_design",
+  "sphinx_book_theme",
+  "ipython",
+  "sphinx_autosummary_accessors"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/comet-toolkit/obsarray"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = ["tests"]
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "obsarray/_version.py"
+versionfile_build = "obsarray/_version.py"
+tag_prefix = ""
+parentdir_prefix = ""
