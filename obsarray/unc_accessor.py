@@ -9,6 +9,7 @@ from obsarray.templater.template_util import create_var
 from obsarray.templater.dataset_util import DatasetUtil
 from obsarray.err_corr import err_corr_forms, BaseErrCorrForm
 from obsarray.utils import empty_err_corr_matrix
+from xarray.core.types import T_Dataset
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
@@ -893,6 +894,88 @@ class UncAccessor(object):
 
         del self._obj[unc_var]
         self._obj[obs_var].attrs["unc_comps"].remove(unc_var)
+
+    def rename(self, vars_dict: dict[str, str]) -> T_Dataset:
+        """
+        Returns a new dataset with renamed variables - safely handling `unc_vars` and related metadata
+
+        :param vars_dict: Dictionary whose keys are current variable names and whose values are the desired names. The desired names must not be the name of an existing dimension or Variable in the Dataset.
+        :returns: Dataset with renamed variables
+        """
+
+        # handle case that xarray.Dataset.rename renames the dimension associated with a renamed coordinate dimension
+        coord_dim_dict = {
+            str(dim): vars_dict[dim]
+            for dim in self._obj.dims
+            if (dim in self._obj.coords) and (dim in vars_dict.keys())
+        }
+        ds = self.rename_dims(coord_dim_dict)
+
+        # update metadata where unc_var err corr param to be renamed
+        unc_var_paths = []
+        for obs_var in ds.unc.obs_vars:
+            for unc_var in ds.unc[obs_var]:
+                unc_var_paths.append((obs_var, unc_var._unc_var_name))
+
+        for unc_var_path in unc_var_paths:
+            unc_var_i = unc_var_path[1]
+
+            for attr in ds[unc_var_i].attrs.keys():
+                if (attr[:9] == "err_corr_") and (attr[-7:] == "_params"):
+                    for i, param in enumerate(ds[unc_var_i].attrs[attr]):
+                        if param in vars_dict.keys():
+                            ds[unc_var_i].attrs[attr][i] = vars_dict[param]
+
+        # safely update unc_vars
+        for unc_var_path in unc_var_paths:
+            obs_var_i = unc_var_path[0]
+            unc_var_i = unc_var_path[1]
+            if unc_var_i in vars_dict:
+                ds = ds.unc[obs_var_i][unc_var_i].rename(vars_dict[unc_var_i])
+
+        # update remaining variable names
+        non_unc_var_names = list(
+            filter(lambda x: x not in self.unc_vars.keys(), self._obj.variables.keys())
+        )
+        var_dict_no_unc = {
+            n: vars_dict[n] for n in non_unc_var_names if n in vars_dict.keys()
+        }
+        ds = ds.rename(var_dict_no_unc)
+
+        return ds
+
+    def rename_dims(self, dims_dict: dict[str, str]) -> T_Dataset:
+        """
+        Returns a new dataset with renamed dimensions - safely handling `unc_vars` related metadata
+
+        :param dims_dict: Dictionary whose keys are current dimension names and whose values are the desired names. The desired names must not be the name of an existing dimension or Variable in the Dataset.
+        :returns: Dataset with renamed dimensions
+        """
+
+        # update dimension names
+        obj = self._obj.rename_dims(dims_dict)
+
+        # update uncertainty metadata related to variable names
+        unc_var_names = []
+        for obs_var in obj.unc.obs_vars:
+            for unc_var in obj.unc[obs_var]:
+                unc_var_names.append(unc_var._unc_var_name)
+
+        for unc_var_name in unc_var_names:
+            for attr in obj[unc_var_name].attrs.keys():
+                if (attr[:9] == "err_corr_") and (attr[-4:] == "_dim"):
+                    if isinstance(obj[unc_var_name].attrs[attr], str):
+                        if obj[unc_var_name].attrs[attr] in dims_dict:
+                            obj[unc_var_name].attrs[attr] = dims_dict[
+                                obj[unc_var_name].attrs[attr]
+                            ]
+
+                    if isinstance(obj[unc_var_name].attrs[attr], list):
+                        for i, attr_i in enumerate(obj[unc_var_name].attrs[attr]):
+                            if attr_i in dims_dict:
+                                obj[unc_var_name].attrs[attr][i] = dims_dict[attr_i]
+
+        return obj
 
 
 if __name__ == "__main__":
