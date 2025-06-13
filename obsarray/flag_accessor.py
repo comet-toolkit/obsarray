@@ -194,12 +194,12 @@ class FlagVariable:
         )
 
         if flag_meaning not in flag_meanings:
-            self._obj[self._flag_var_name].attrs = (
-                DatasetUtil.add_flag_meaning_to_attrs(
-                    self._obj[self._flag_var_name].attrs,
-                    flag_meaning,
-                    self._obj[self._flag_var_name].dtype,
-                )
+            self._obj[
+                self._flag_var_name
+            ].attrs = DatasetUtil.add_flag_meaning_to_attrs(
+                self._obj[self._flag_var_name].attrs,
+                flag_meaning,
+                self._obj[self._flag_var_name].dtype,
             )
 
         self[flag_meaning][:] = flag_value
