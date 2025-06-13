@@ -507,7 +507,7 @@ class DatasetUtil:
             ds[flag_meaning] = DatasetUtil.create_variable(
                 list(da.shape), bool, dim_names=list(da.dims)
             )
-            ds[flag_meaning] = (da & flag_mask).astype(bool)
+            ds[flag_meaning] = (da.astype(int) & flag_mask).astype(bool)
 
         return ds
 
