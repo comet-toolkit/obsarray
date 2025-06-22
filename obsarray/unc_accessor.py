@@ -308,12 +308,24 @@ class Uncertainty:
                 ]
             ):
                 if dim_err_corr[1].form in ["random", "systematic"]:
-                    err_corr_dict[dim_err_corr[0]] = dim_err_corr[1].form
+                    if isinstance(dim_err_corr[0], List):
+                        for dim in dim_err_corr[0]:
+                            err_corr_dict[dim] = dim_err_corr[1].form
+
+                    else:
+                        err_corr_dict[dim_err_corr[0]] = dim_err_corr[1].form
 
                 elif dim_err_corr[1].form == "err_corr_matrix":
-                    err_corr_dict[dim_err_corr[0]] = self._obj[
-                        dim_err_corr[1].params[0]
-                    ].values
+                    if isinstance(dim_err_corr[0], List):
+                        for dim in dim_err_corr[0]:
+                            err_corr_dict[dim] = self._obj[
+                                dim_err_corr[1].params[0]
+                            ].values
+
+                    else:
+                        err_corr_dict[dim_err_corr[0]] = self._obj[
+                            dim_err_corr[1].params[0]
+                        ].values
 
                 else:
                     raise NotImplementedError(
