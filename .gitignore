@@ -117,3 +117,4 @@ ENV/
 
 # IDE settings
 .vscode/.git.old
+CLAUDE.md
