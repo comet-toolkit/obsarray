@@ -48,8 +48,7 @@ def create_ds(var_suffix="", dim_suffix="", coord_dim_suffix_extra=""):
 
     ds = xr.Dataset(
         data_vars={
-            "temperature"
-            + var_suffix: (
+            "temperature" + var_suffix: (
                 [
                     "x" + dim_suffix,
                     "y" + dim_suffix,

@@ -139,7 +139,6 @@ class Uncertainty:
         # as a two element tuple (as described in doc string)
         err_corr = []
         for i in err_corr_idxs:
-
             dim_i = self._obj[self._unc_var_name].attrs[
                 DatasetUtil.return_err_corr_dim_str(i)
             ]
@@ -150,7 +149,6 @@ class Uncertainty:
 
             # continue if parmeterisation dimension in slice dimensions
             if [dim_i_j for dim_i_j in list_dim_i if dim_i_j in sli_dims]:
-
                 form_i = self._obj[self._unc_var_name].attrs[
                     DatasetUtil.return_err_corr_form_str(i)
                 ]
@@ -862,7 +860,6 @@ class UncAccessor(object):
 
         # use templater functionality if var defined with tuple
         elif type(unc_def) == tuple:
-
             attrs = {}
             if len(unc_def) == 3:
                 attrs = unc_def[2]

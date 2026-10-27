@@ -319,7 +319,6 @@ class FlagAccessor(object):
 
         # add uncertainty variable
         if type(flag_def) == xr.DataArray:
-
             # add necessary flag metadata if missing from provided data array
             flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_def.attrs)
             flag_def.attrs.update(DatasetUtil.pack_flag_attrs(flag_meanings))
@@ -328,7 +327,6 @@ class FlagAccessor(object):
 
         # use templater functionality if var defined with tuple
         elif type(flag_def) == tuple:
-
             attrs = flag_def[1]
 
             if "flag_meanings" not in attrs:

@@ -1,7 +1,7 @@
 """err_corr_forms - module for the defintion of error-correlation parameterisation forms"""
 
 import abc
-from typing import Callable, Type, Union, List
+from typing import Callable, Type, Union
 import numpy as np
 from comet_maths.linear_algebra.matrix_conversion import expand_errcorr_dims
 
@@ -201,7 +201,6 @@ def register_err_corr_form(form_name: str) -> Callable:
 
 @register_err_corr_form("random")
 class RandomCorrelation(BaseErrCorrForm):
-
     form = "random"
     is_random = True
 
@@ -226,7 +225,6 @@ class RandomCorrelation(BaseErrCorrForm):
 
 @register_err_corr_form("systematic")
 class SystematicCorrelation(BaseErrCorrForm):
-
     form = "systematic"
     is_systematic = True
 
@@ -251,7 +249,6 @@ class SystematicCorrelation(BaseErrCorrForm):
 
 @register_err_corr_form("err_corr_matrix")
 class ErrCorrMatrixCorrelation(BaseErrCorrForm):
-
     form = "err_corr_matrix"
 
     def build_matrix(self, sli: tuple) -> np.ndarray:
@@ -278,7 +275,6 @@ class ErrCorrMatrixCorrelation(BaseErrCorrForm):
 
 @register_err_corr_form("ensemble")
 class EnsembleCorrelation(BaseErrCorrForm):
-
     form = "ensemble"
 
     def build_matrix(self, sli: tuple) -> np.ndarray:
