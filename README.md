@@ -75,7 +75,7 @@ obsarray is free software licensed under the
 
 ## Acknowledgements
 
-obsarray has been developed by [Sam Hunt](https://github.com/shunt16).
+obsarray has been developed by the [CoMet Toolkit Team](mailto:team@comet-toolkit.org).
 
 The development has been funded by:
 
