@@ -130,6 +130,10 @@ class TemplateUtil:
         # Create variable and add to dataset
         if isinstance(dtype, str):
             if dtype == "flag":
+                if attributes is None:
+                    raise ValueError(
+                        "Flag variable " + var_name + " must define flag_meanings"
+                    )
                 flag_meanings = attributes.pop("flag_meanings")
                 variable = du.create_flags_variable(
                     dim_sizes,

@@ -1,7 +1,7 @@
 """err_corr_forms - module for the defintion of error-correlation parameterisation forms"""
 
 import abc
-from typing import Callable, Type, Union
+from typing import Callable, Type
 import numpy as np
 from comet_maths.linear_algebra.matrix_conversion import expand_errcorr_dims
 
@@ -150,7 +150,7 @@ class BaseErrCorrForm(abc.ABC):
         )
 
     @abc.abstractmethod
-    def build_matrix(self, sli: Union[np.ndarray, tuple]) -> np.ndarray:
+    def build_matrix(self, sli: tuple) -> np.ndarray:
         """
         Returns uncertainty effect error-correlation matrix, populated with error-correlation values defined
         in this parameterisation
@@ -161,7 +161,7 @@ class BaseErrCorrForm(abc.ABC):
         """
         pass
 
-    def build_dot_matrix(self, sli: Union[np.ndarray, tuple]) -> np.ndarray:
+    def build_dot_matrix(self, sli: tuple) -> np.ndarray:
         """
         Returns expanded error correlation matrix for use in dot product with error correlation
         in other dimensions.

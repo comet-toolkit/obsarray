@@ -122,7 +122,7 @@ class DSTemplater:
         :return: empty sizes dictionary
         """
 
-        dim_sizes_dict = dict()
+        dim_sizes_dict: Dict[str, None] = dict()
         for dim in self.return_template_dim_names(ds_format):
             dim_sizes_dict[dim] = None
 
