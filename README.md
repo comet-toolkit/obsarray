@@ -7,6 +7,14 @@
 
 **obsarray** is an extension to [xarray](https://docs.xarray.dev/en/stable/) for defining, storing and interfacing with uncertainty information using standardised metadata. It is particularly designed to work well with [netCDF](https://www.unidata.ucar.edu/software/netcdf/) files and for the Earth Observation community.
 
+> **Upcoming change:** obsarray currently follows v0.1 of the
+> [UNC specification](https://comet-toolkit.github.io/unc_website/) for
+> uncertainty metadata. A future release will default to
+> [draft v0.2](https://comet-toolkit.github.io/unc_website/specification/draft-v0.2/unc_specification.html),
+> which is being adopted into the CF conventions and is not backwards
+> compatible with v0.1. See
+> [what this means for you](https://obsarray.readthedocs.io/en/latest/content/user/unc_conventions.html).
+
 obsarray is part of the [CoMet Toolkit](https://www.comet-toolkit.org) (community metrology toolkit), and can combined with the [punpy](https://punpy.readthedocs.io/en/latest/) (propagating uncertainties in python) module for very simple propagation of defined data uncertainties through arbitrary python functions.
 
 ## Installation
