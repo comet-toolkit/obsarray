@@ -16,8 +16,8 @@ UNC_CONVENTIONS_DOCS_URL = (
 
 _UNC_CONVENTIONS_MESSAGE = (
     "obsarray currently writes uncertainty metadata following v0.1 of the UNC "
-    "specification. A future release will default to UNC draft v0.2, which is being "
-    "adopted into the CF conventions and is not backwards compatible with v0.1 (for "
+    "specification. A future release will default to UNC draft v0.2, which is proposed "
+    "for inclusion into the CF conventions and is not backwards compatible with v0.1 (for "
     "example, 'unc_comps' becomes 'uncertainty_variables' and 'err_corr_*' becomes "
     "'error_correlation'). See " + UNC_CONVENTIONS_DOCS_URL + " for details. To keep "
     "the current behaviour and silence this warning, call "
