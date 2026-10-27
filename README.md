@@ -11,7 +11,7 @@
 > [UNC specification](https://comet-toolkit.github.io/unc_website/) for
 > uncertainty metadata. A future release will default to
 > [draft v0.2](https://comet-toolkit.github.io/unc_website/specification/draft-v0.2/unc_specification.html),
-> which is being adopted into the CF conventions and is not backwards
+> which is proposed for inclusion in the CF conventions and is not backwards
 > compatible with v0.1. See
 > [what this means for you](https://obsarray.readthedocs.io/en/latest/content/user/unc_conventions.html).
 
