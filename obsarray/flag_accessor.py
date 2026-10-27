@@ -2,7 +2,7 @@
 
 import numpy as np
 import xarray as xr
-from typing import List, Optional, Union, Tuple
+from typing import Hashable, List, Optional, Union, Tuple
 from obsarray.templater.template_util import create_var
 from obsarray.templater.dataset_util import DatasetUtil
 
@@ -45,7 +45,7 @@ class Flag:
         """Custom  __repr__"""
         return str(self)
 
-    def __getitem__(self, sli: tuple):
+    def __getitem__(self, sli: Union[tuple, slice, int]):
         """
         Defines variable slice
 
@@ -58,7 +58,7 @@ class Flag:
 
         return self
 
-    def __setitem__(self, sli: tuple, flag_value):
+    def __setitem__(self, sli: Union[tuple, slice, int], flag_value):
         """
         Sets flag values
 
@@ -83,26 +83,28 @@ class Flag:
                 )
             else:
                 self._obj[self._flag_var_name].values[self._sli] = (
-                    self._obj[self._flag_var_name][self._sli].values & ~flag_mask
-                )
+                    self._obj[self._flag_var_name][self._sli].values
+                    & np.array(~flag_mask)
+                ).astype(self._obj[self._flag_var_name].values[self._sli].dtype)
 
         # else apply mask
         else:
             if flag_value.dtype is not np.dtype(bool):
                 TypeError("Flag mask must of boolean type")
 
-            i_true = np.where(flag_value == True)
-            i_false = np.where(flag_value == False)
+            i_true = np.where(flag_value == True)  # noqa: E712 (elementwise)
+            i_false = np.where(flag_value == False)  # noqa: E712 (elementwise)
 
             self._obj[self._flag_var_name][self._sli].values[i_true] = np.array(
                 self._obj[self._flag_var_name][self._sli].values[i_true] | flag_mask
             )
 
             self._obj[self._flag_var_name][self._sli].values[i_false] = np.array(
-                self._obj[self._flag_var_name][self._sli].values[i_false] & ~flag_mask
-            )
+                self._obj[self._flag_var_name][self._sli].values[i_false]
+                & np.array(~flag_mask)
+            ).astype(self._obj[self._flag_var_name].values[self._sli].dtype)
 
-    def _expand_sli(self, sli: Optional[tuple] = None) -> tuple:
+    def _expand_sli(self, sli: Optional[Union[tuple, slice, int]] = None) -> tuple:
         """
         Function to expand the provided sli so that it always has the right number of dimensions
 
@@ -118,12 +120,14 @@ class Flag:
         # E.g. if providing [0] for a variable with 3 dimensions, this becomes
         # [0,slice(None),slice(None)]
         else:
-            out_sli = list([slice(None)] * self._obj[self._flag_var_name].ndim)
+            out_sli_list: list = list(
+                [slice(None)] * self._obj[self._flag_var_name].ndim
+            )
             sli_list = list(sli) if isinstance(sli, tuple) else [sli]
             for i in range(len(sli_list)):
                 if not sli_list[i] == ":":
-                    out_sli[i] = sli_list[i]
-            out_sli = tuple(out_sli)
+                    out_sli_list[i] = sli_list[i]
+            out_sli = tuple(out_sli_list)
 
         return out_sli
 
@@ -318,8 +322,7 @@ class FlagAccessor(object):
         """
 
         # add uncertainty variable
-        if type(flag_def) == xr.DataArray:
-
+        if type(flag_def) is xr.DataArray:
             # add necessary flag metadata if missing from provided data array
             flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_def.attrs)
             flag_def.attrs.update(DatasetUtil.pack_flag_attrs(flag_meanings))
@@ -327,8 +330,7 @@ class FlagAccessor(object):
             self._obj[flag_var_name] = flag_def
 
         # use templater functionality if var defined with tuple
-        elif type(flag_def) == tuple:
-
+        elif type(flag_def) is tuple:
             attrs = flag_def[1]
 
             if "flag_meanings" not in attrs:
@@ -415,7 +417,7 @@ class FlagAccessor(object):
 
         return self._obj[list(flag_var_names)].data_vars
 
-    def _is_data_var(self, var_name: str) -> bool:
+    def _is_data_var(self, var_name: Hashable) -> bool:
         """
         Returns true if named dataset variable is an data variable (i.e. not a flag variable)
 
@@ -426,7 +428,7 @@ class FlagAccessor(object):
             return True
         return False
 
-    def _is_flag_var(self, var_name: str) -> bool:
+    def _is_flag_var(self, var_name: Hashable) -> bool:
         """
         Returns true if named dataset variable is an flag variable
 

@@ -1,47 +1,80 @@
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "obsarray"
 dynamic = ["version"]
-description = "Measurement data handling in Python"
-authors = [
-  { name="CoMet Toolkit Team", email="team@comet-toolkit.org" }
-]
+description = "Extension to xarray for handling uncertainty-quantified observation data"
 readme = "README.md"
 license-files = ["LICENSE"]
-requires-python = ">=3.8"
+authors = [{name = "CoMet Toolkit Team", email = "team@comet-toolkit.org"}]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
 dependencies = [
-  "comet_maths",
-  "netcdf4",
-  "xarray"
+    "numpy",
+    "xarray",
+    "netcdf4",
+    "comet_maths",
 ]
 
 [project.optional-dependencies]
 dev = [
-  "pre-commit",
-  "tox",
-  "sphinx",
-  "sphinx_design",
-  "sphinx_book_theme",
-  "ipython",
-  "sphinx_autosummary_accessors"
+    # Pinned: both gate CI. Bump deliberately, not incidentally.
+    "ruff==0.15.13",
+    "mypy==2.1.0",
+    "pre-commit",
+    "pytest",
+    "pytest-html",
+    "pytest-cov",
+]
+docs = [
+    "sphinx",
+    "sphinx_book_theme",
+    "sphinx_design",
+    "sphinx_autosummary_accessors",
+    "ipython",
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/comet-toolkit/obsarray"
-
-[tool.setuptools]
-include-package-data = true
+Homepage = "https://github.com/comet-toolkit/obsarray"
+Documentation = "https://obsarray.readthedocs.io"
 
 [tool.setuptools.packages.find]
-exclude = ["tests"]
+include = ["obsarray*"]
 
-[tool.versioneer]
-VCS = "git"
-style = "pep440"
-versionfile_source = "obsarray/_version.py"
-versionfile_build = "obsarray/_version.py"
-tag_prefix = "v"
-parentdir_prefix = ""
+[tool.setuptools_scm]
+# version inferred from git tags (e.g. v1.0.3); no extra config needed
+
+[tool.mypy]
+allow_untyped_globals = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["obsarray.test.*", "obsarray.*.tests.*"]
+ignore_errors = true
+
+[tool.pytest.ini_options]
+testpaths = ["obsarray"]
+
+[tool.ruff]
+# 88 (black's default) rather than the MetEOR template's 120, so switching from
+# black to ruff format doesn't reflow the existing codebase.
+line-length = 88
+exclude = ["docs"]
+
+[tool.ruff.lint]
+# ruff's historical defaults, stated explicitly so a version bump cannot widen
+# the gate without someone choosing to.
+select = ["E4", "E7", "E9", "F"]
+extend-ignore = ["W291"]
+
+[tool.ruff.lint.per-file-ignores]
+"obsarray/__init__.py" = ["E402", "F401"]

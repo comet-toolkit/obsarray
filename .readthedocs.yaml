@@ -6,15 +6,23 @@ version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   tools:
-    python: "3.10"
+    python: "3.13"
+  jobs:
+    # Read the Docs clones shallowly; setuptools_scm needs the tags to
+    # derive the version shown in the docs.
+    post_checkout:
+      - git fetch --unshallow || true
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: docs/conf.py
 
-# Declare the Python requirements required to build docs
+# Install the package with its docs extras from pyproject.toml
 python:
   install:
-    - requirements: requirements.txt
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs

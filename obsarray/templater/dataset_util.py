@@ -6,6 +6,7 @@ import string
 from copy import deepcopy
 import xarray
 import numpy
+from numpy.typing import DTypeLike
 from typing import Union, Optional, List, Dict, Tuple
 
 
@@ -34,9 +35,9 @@ class DatasetUtil:
     @staticmethod
     def create_default_array(
         dim_sizes: List[int],
-        dtype: numpy.typecodes,
+        dtype: DTypeLike,
         dim_names: Optional[List[str]] = None,
-        fill_value: Optional[Union[int, float]] = None,
+        fill_value: Optional[Union[int, float, numpy.number]] = None,
     ) -> xarray.DataArray:
         """
         Return default empty xarray DataArray
@@ -66,10 +67,10 @@ class DatasetUtil:
     @staticmethod
     def create_variable(
         dim_sizes: List[int],
-        dtype: numpy.typecodes,
+        dtype: DTypeLike,
         dim_names: Optional[List[str]] = None,
-        attributes: Dict = None,
-        fill_value: Optional[Union[int, float]] = None,
+        attributes: Optional[Dict] = None,
+        fill_value: Optional[Union[int, float, numpy.number]] = None,
     ) -> xarray.Variable:
         """
         Return default empty xarray Variable
@@ -107,7 +108,7 @@ class DatasetUtil:
     @staticmethod
     def create_unc_variable(
         dim_sizes: List[int],
-        dtype: numpy.typecodes,
+        dtype: DTypeLike,
         dim_names: List[str],
         attributes: Optional[Dict] = None,
         pdf_shape: str = "gaussian",
@@ -315,7 +316,7 @@ class DatasetUtil:
 
     @staticmethod
     def add_flag_meaning_to_attrs(
-        attrs: dict, flag_meaning: str, dtype: numpy.typecodes
+        attrs: dict, flag_meaning: str, dtype: DTypeLike
     ) -> dict:
         """
         Add new meaning to flag variable attributes
@@ -384,7 +385,7 @@ class DatasetUtil:
         return updated_attrs
 
     @staticmethod
-    def return_flags_dtype(n_masks: int) -> numpy.typecodes:
+    def return_flags_dtype(n_masks: int) -> DTypeLike:
         """
         Return required flags array data type
 
@@ -404,10 +405,10 @@ class DatasetUtil:
     @staticmethod
     def add_encoding(
         variable: xarray.Variable,
-        dtype: numpy.typecodes,
+        dtype: DTypeLike,
         scale_factor: Optional[float] = 1.0,
         offset: Optional[float] = 0.0,
-        fill_value: Optional[Union[int, float]] = None,
+        fill_value: Optional[Union[int, float, numpy.number]] = None,
         chunksizes: Optional[float] = None,
     ):
         """
@@ -442,7 +443,9 @@ class DatasetUtil:
         variable.encoding = encoding_dict
 
     @staticmethod
-    def get_default_fill_value(dtype: numpy.typecodes) -> Union[int, float]:
+    def get_default_fill_value(
+        dtype: DTypeLike,
+    ) -> Optional[Union[int, float, numpy.number]]:
         """
         Returns default fill_value for given data type
 
@@ -469,6 +472,7 @@ class DatasetUtil:
             return numpy.float32(9.96921e36)
         elif dtype == numpy.float64:
             return numpy.float64(9.969209968386869e36)
+        return None
 
     @staticmethod
     def _get_flag_encoding(da):
@@ -569,7 +573,7 @@ class DatasetUtil:
 
         set_flags = DatasetUtil.unpack_flags(da)[flag_name]
 
-        if numpy.any(set_flags == True) and error_if_set:
+        if numpy.any(set_flags == True) and error_if_set:  # noqa: E712
             raise ValueError(
                 "Flag " + flag_name + " already set for variable " + da.name
             )
@@ -597,7 +601,7 @@ class DatasetUtil:
 
         set_flags = DatasetUtil.unpack_flags(da)[flag_name]
 
-        if numpy.any(set_flags == False) and error_if_unset:
+        if numpy.any(set_flags == False) and error_if_unset:  # noqa: E712
             raise ValueError(
                 "Flag " + flag_name + " already set for variable " + da.name
             )

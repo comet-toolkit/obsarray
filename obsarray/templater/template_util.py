@@ -91,7 +91,6 @@ class TemplateUtil:
         """
 
         for var_name in template.keys():
-
             var = TemplateUtil._create_var(var_name, template[var_name], size)
 
             ds[var_name] = var
@@ -131,6 +130,10 @@ class TemplateUtil:
         # Create variable and add to dataset
         if isinstance(dtype, str):
             if dtype == "flag":
+                if attributes is None:
+                    raise ValueError(
+                        "Flag variable " + var_name + " must define flag_meanings"
+                    )
                 flag_meanings = attributes.pop("flag_meanings")
                 variable = du.create_flags_variable(
                     dim_sizes,
@@ -173,7 +176,7 @@ class TemplateUtil:
         """
 
         # Variable name must be type str
-        if type(variable_name) != str:
+        if type(variable_name) is not str:
             raise TypeError(
                 "Invalid variable name: " + str(variable_name) + " (must be string)"
             )

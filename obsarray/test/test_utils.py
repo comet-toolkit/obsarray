@@ -12,8 +12,7 @@ __all__ = []
 def create_test_ds(suffix):
     # define ds variables
     template = {
-        "temperature"
-        + suffix: {
+        "temperature" + suffix: {
             "dtype": np.float32,
             "dim": ["x" + suffix, "y" + suffix, "time" + suffix],
             "attributes": {
@@ -24,8 +23,7 @@ def create_test_ds(suffix):
                 ],
             },
         },
-        "u_ran_temperature"
-        + suffix: {
+        "u_ran_temperature" + suffix: {
             "dtype": np.float32,
             "dim": ["x" + suffix, "y" + suffix, "time" + suffix],
             "attributes": {
@@ -42,8 +40,7 @@ def create_test_ds(suffix):
                 ],
             },
         },
-        "u_sys_temperature"
-        + suffix: {
+        "u_sys_temperature" + suffix: {
             "dtype": np.float32,
             "dim": ["x" + suffix, "y" + suffix, "time" + suffix],
             "attributes": {
@@ -70,14 +67,12 @@ def create_test_ds(suffix):
                 ],
             },
         },
-        "pressure"
-        + suffix: {
+        "pressure" + suffix: {
             "dtype": np.float32,
             "dim": ["x" + suffix, "y" + suffix, "time" + suffix],
             "attributes": {"units": "Pa", "unc_comps": ["u_str_pressure" + suffix]},
         },
-        "u_str_pressure"
-        + suffix: {
+        "u_str_pressure" + suffix: {
             "dtype": np.float32,
             "dim": ["x" + suffix, "y" + suffix, "time" + suffix],
             "attributes": {
@@ -99,20 +94,17 @@ def create_test_ds(suffix):
                 ],
             },
         },
-        "err_corr_str_pressure_y"
-        + suffix: {
+        "err_corr_str_pressure_y" + suffix: {
             "dtype": np.float32,
             "dim": ["y" + suffix, "y" + suffix],
             "attributes": {"units": ""},
         },
-        "n_moles"
-        + suffix: {
+        "n_moles" + suffix: {
             "dtype": np.float32,
             "dim": ["x" + suffix, "y" + suffix, "time" + suffix],
             "attributes": {"units": "", "unc_comps": ["u_ran_n_moles" + suffix]},
         },
-        "u_ran_n_moles"
-        + suffix: {
+        "u_ran_n_moles" + suffix: {
             "dtype": np.float32,
             "dim": ["x" + suffix, "y" + suffix, "time" + suffix],
             "attributes": {

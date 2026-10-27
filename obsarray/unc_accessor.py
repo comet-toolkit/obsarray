@@ -3,13 +3,12 @@
 from copy import deepcopy
 import numpy as np
 import xarray as xr
-from typing import Union, Tuple, List, Optional
+from typing import Hashable, Union, Tuple, List, Optional
 from comet_maths import convert_corr_to_cov, correlation_from_covariance
 from obsarray.templater.template_util import create_var
 from obsarray.templater.dataset_util import DatasetUtil
 from obsarray.err_corr import err_corr_forms, BaseErrCorrForm
 from obsarray.utils import empty_err_corr_matrix
-from xarray.core.types import T_Dataset
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
@@ -28,7 +27,7 @@ class Uncertainty:
     def __init__(
         self,
         xarray_obj: xr.Dataset,
-        var_name: str,
+        var_name: Hashable,
         unc_var_name: str,
         sli: Optional[tuple] = None,
     ):
@@ -84,12 +83,12 @@ class Uncertainty:
         # E.g. if providing [0] for a variable with 3 dimensions, this becomes
         # [0,slice(None),slice(None)]
         else:
-            out_sli = list([slice(None)] * self._obj[self._unc_var_name].ndim)
+            out_sli_list = list([slice(None)] * self._obj[self._unc_var_name].ndim)
             sli_list = list(sli) if isinstance(sli, tuple) else [sli]
             for i in range(len(sli_list)):
                 if not sli_list[i] == ":":
-                    out_sli[i] = sli_list[i]
-            out_sli = tuple(out_sli)
+                    out_sli_list[i] = sli_list[i]
+            out_sli = tuple(out_sli_list)
 
         return out_sli
 
@@ -139,7 +138,6 @@ class Uncertainty:
         # as a two element tuple (as described in doc string)
         err_corr = []
         for i in err_corr_idxs:
-
             dim_i = self._obj[self._unc_var_name].attrs[
                 DatasetUtil.return_err_corr_dim_str(i)
             ]
@@ -150,7 +148,6 @@ class Uncertainty:
 
             # continue if parmeterisation dimension in slice dimensions
             if [dim_i_j for dim_i_j in list_dim_i if dim_i_j in sli_dims]:
-
                 form_i = self._obj[self._unc_var_name].attrs[
                     DatasetUtil.return_err_corr_form_str(i)
                 ]
@@ -350,7 +347,7 @@ class Uncertainty:
         # parameterisation object
         for dim_err_corr in self.err_corr:
             sliced_dims = dim_err_corr[1].get_sliced_dims_errcorr(self._sli)
-            if len(dim_err_corr[1].get_sliced_dims_errcorr(self._sli)) > 0:
+            if len(sliced_dims) > 0:
                 err_corr_matrix.values = err_corr_matrix.values.dot(
                     dim_err_corr[1].build_dot_matrix(self._sli)
                 )
@@ -381,7 +378,7 @@ class VariableUncertainty:
     :param var_name: name of dataset variable
     """
 
-    def __init__(self, xarray_obj: xr.Dataset, var_name: str):
+    def __init__(self, xarray_obj: xr.Dataset, var_name: Hashable):
         self._obj = xarray_obj
         self._var_name = var_name
         self._sli = tuple([slice(None)] * self._obj[self._var_name].ndim)
@@ -454,7 +451,7 @@ class VariableUncertainty:
         self.i = 0  # Define counter
         return self
 
-    def __next__(self) -> Uncertainty:
+    def __next__(self) -> Union[Uncertainty, "VariableUncertainty"]:
         """
         Returns ith variable uncertainty
 
@@ -679,7 +676,7 @@ class UncAccessor(object):
         """Custom  __repr__"""
         return str(self)
 
-    def __getitem__(self, var_name: str) -> VariableUncertainty:
+    def __getitem__(self, var_name: Hashable) -> VariableUncertainty:
         """
         Returns :py:class:`~obsarray.unc_accessor.VariableUncertainty` object to interface with uncertainty information for a given observation variable
 
@@ -754,14 +751,14 @@ class UncAccessor(object):
         for var_name in self.obs_vars:
             var_unc_var_names = self._var_unc_var_names(var_name)
 
-            if type(var_unc_var_names) == str:
+            if type(var_unc_var_names) is str:
                 var_unc_var_names = [var_unc_var_names]
 
             unc_var_names |= set(var_unc_var_names)
         return self._obj[list(unc_var_names)].data_vars
 
     def _var_unc_var_names(
-        self, obs_var_name: str, unc_type: Optional[str] = None
+        self, obs_var_name: Hashable, unc_type: Optional[str] = None
     ) -> List[str]:
         """
         Returns the names of uncertainty variables associated with specified observation variable
@@ -776,7 +773,7 @@ class UncAccessor(object):
         all_unc_var_names = []
         if "unc_comps" in self._obj[obs_var_name].attrs:
             all_unc_var_names = self._obj[obs_var_name].attrs["unc_comps"]
-            if type(all_unc_var_names) == str:
+            if type(all_unc_var_names) is str:
                 all_unc_var_names = [all_unc_var_names]
 
         # Filter returned names if unc_type defined
@@ -798,7 +795,7 @@ class UncAccessor(object):
 
         return unc_var_names
 
-    def _is_obs_var(self, var_name: str) -> bool:
+    def _is_obs_var(self, var_name: Hashable) -> bool:
         """
         Returns true if named dataset variable is an observation variable
 
@@ -825,7 +822,7 @@ class UncAccessor(object):
         obs_var_name: str,
         sli: Optional[tuple] = None,
         unc_type: Optional[str] = None,
-    ) -> xr.core.dataset.DataVariables:
+    ) -> Optional[xr.core.dataset.DataVariables]:
         """
         Returns uncertainty data variables for specified observation variable
 
@@ -857,14 +854,13 @@ class UncAccessor(object):
         """
 
         # add uncertainty variable
-        if type(unc_def) == xr.DataArray:
+        if type(unc_def) is xr.DataArray:
             self._obj[unc_var] = unc_def
 
         # use templater functionality if var defined with tuple
-        elif type(unc_def) == tuple:
-
-            attrs = {}
-            if len(unc_def) == 3:
+        elif type(unc_def) is tuple:
+            attrs: dict = {}
+            if len(unc_def) == 3 and unc_def[2] is not None:
                 attrs = unc_def[2]
 
             if "err_corr" not in attrs:
@@ -885,7 +881,7 @@ class UncAccessor(object):
 
         # add variable to uncertainty components attribute
         if self._is_obs_var(obs_var):
-            if type(self._obj[obs_var].attrs["unc_comps"]) == str:
+            if type(self._obj[obs_var].attrs["unc_comps"]) is str:
                 self._obj[obs_var].attrs["unc_comps"] = [
                     self._obj[obs_var].attrs["unc_comps"]
                 ]
@@ -907,7 +903,7 @@ class UncAccessor(object):
         del self._obj[unc_var]
         self._obj[obs_var].attrs["unc_comps"].remove(unc_var)
 
-    def rename(self, vars_dict: dict[str, str]) -> T_Dataset:
+    def rename(self, vars_dict: dict[str, str]) -> xr.Dataset:
         """
         Returns a new dataset with renamed variables - safely handling `unc_vars` and related metadata
 
@@ -956,7 +952,7 @@ class UncAccessor(object):
 
         return ds
 
-    def rename_dims(self, dims_dict: dict[str, str]) -> T_Dataset:
+    def rename_dims(self, dims_dict: dict[str, str]) -> xr.Dataset:
         """
         Returns a new dataset with renamed dimensions - safely handling `unc_vars` related metadata
 

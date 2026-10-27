@@ -1,12 +1,9 @@
 from obsarray.err_corr import register_err_corr_form, BaseErrCorrForm
-import xarray as xr
 import numpy as np
-import obsarray
 
 
 @register_err_corr_form("new")
 class NewForm(BaseErrCorrForm):
-
     form = "new"
     is_systematic = True
 

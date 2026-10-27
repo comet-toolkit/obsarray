@@ -20,7 +20,7 @@ def empty_err_corr_matrix(obs_var: xr.DataArray):
     dim_lens = [len(obs_var[dim]) for dim in dim_names]
 
     n_elems = int(np.prod(dim_lens))
-    erc_dim_name = ".".join(dim_names)
+    erc_dim_name = ".".join(str(dim) for dim in dim_names)
 
     err_corr_matrix = xr.DataArray(np.eye(n_elems), dims=[erc_dim_name, erc_dim_name])
 
@@ -47,12 +47,14 @@ def append_names(
 
     # update variable names
     if not skip_vars:
-        var_rename = {var_name: var_name + suffix for var_name in ds.variables.keys()}
+        var_rename = {
+            var_name: f"{var_name}{suffix}" for var_name in ds.variables.keys()
+        }
         ds = ds.unc.rename(var_rename)
 
     # update dimension names
     if not skip_dims:
-        dim_rename = {dim_name: dim_name + suffix for dim_name in ds.dims.keys()}
+        dim_rename = {dim_name: f"{dim_name}{suffix}" for dim_name in ds.dims.keys()}
         ds = ds.unc.rename_dims(dim_rename)
 
     # update attribute names

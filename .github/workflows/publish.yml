@@ -1,0 +1,97 @@
+name: Publish to PyPI
+
+# Triggered by pushing a v* tag, or manually via the "Run workflow" button.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'publish' to confirm release"
+        required: true
+
+jobs:
+  # -----------------------------------------------------------------------
+  # Guard: manual runs require the confirmation input.
+  # -----------------------------------------------------------------------
+  check:
+    name: Check confirmation
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'push' ||
+      github.event.inputs.confirm == 'publish'
+    steps:
+      - run: echo "Confirmed — proceeding with release."
+
+  # -----------------------------------------------------------------------
+  # Test gate: don't publish if tests fail.
+  # -----------------------------------------------------------------------
+  test:
+    name: Tests (Python 3.13)
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: pytest --cov=obsarray
+
+  # -----------------------------------------------------------------------
+  # Build source distribution and wheel.
+  # -----------------------------------------------------------------------
+  build:
+    name: Build distribution
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # full history so setuptools_scm picks up the tag
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Build
+        run: |
+          pip install build
+          python -m build
+
+      - name: Store distribution packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  # -----------------------------------------------------------------------
+  # Publish to PyPI via trusted publisher (OIDC — no API token needed).
+  #
+  # One-time setup required in the PyPI project settings:
+  #   Publisher:   GitHub Actions
+  #   Owner:       comet-toolkit
+  #   Repository:  obsarray
+  #   Workflow:    publish.yml
+  #   Environment: pypi
+  # -----------------------------------------------------------------------
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/obsarray
+    permissions:
+      id-token: write  # required for OIDC trusted publishing
+
+    steps:
+      - name: Download distribution packages
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
