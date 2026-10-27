@@ -126,3 +126,6 @@ ENV/
 .vscode/.git.old
 
 CLAUDE.md
+
+# NPL quality management documentation - internal only, not for the public repo
+quality_documentation/
