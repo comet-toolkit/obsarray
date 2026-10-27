@@ -37,10 +37,6 @@ def compare_err_corr_form(self, form, exp_form):
 def create_ds(var_suffix="", dim_suffix="", coord_dim_suffix_extra=""):
     np.random.seed(0)
     temperature = 15 + 8 * np.random.randn(2, 2, 3)
-    u_r_temperature = temperature * 0.02
-    u_s_temperature = temperature * 0.01
-    precipiation = 15 + 8 * np.random.randn(2, 2, 3)
-    u_r_precipiation = temperature * 0.02
     lon = [[-99.83, -99.32], [-99.79, -99.23]]
     lat = [[42.25, 42.21], [42.63, 42.59]]
     time = pd.date_range("2014-09-06", periods=3)
@@ -799,7 +795,9 @@ class TestUncertainty(unittest.TestCase):
 
         exp_ds = create_ds(dim_suffix=dim_suffix)
 
-        xr.testing.assert_identical(ds, exp_ds)
+        # xarray keeps the index on the renamed "time" coordinate, whereas a
+        # freshly built non-dimension coordinate has none - compare without it
+        xr.testing.assert_identical(ds.drop_indexes("time"), exp_ds)
 
 
 if __name__ == "__main__":

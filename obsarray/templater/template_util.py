@@ -172,7 +172,7 @@ class TemplateUtil:
         """
 
         # Variable name must be type str
-        if type(variable_name) != str:
+        if type(variable_name) is not str:
             raise TypeError(
                 "Invalid variable name: " + str(variable_name) + " (must be string)"
             )

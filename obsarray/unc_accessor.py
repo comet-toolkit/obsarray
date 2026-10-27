@@ -348,7 +348,7 @@ class Uncertainty:
         # parameterisation object
         for dim_err_corr in self.err_corr:
             sliced_dims = dim_err_corr[1].get_sliced_dims_errcorr(self._sli)
-            if len(dim_err_corr[1].get_sliced_dims_errcorr(self._sli)) > 0:
+            if len(sliced_dims) > 0:
                 err_corr_matrix.values = err_corr_matrix.values.dot(
                     dim_err_corr[1].build_dot_matrix(self._sli)
                 )
@@ -752,7 +752,7 @@ class UncAccessor(object):
         for var_name in self.obs_vars:
             var_unc_var_names = self._var_unc_var_names(var_name)
 
-            if type(var_unc_var_names) == str:
+            if type(var_unc_var_names) is str:
                 var_unc_var_names = [var_unc_var_names]
 
             unc_var_names |= set(var_unc_var_names)
@@ -774,7 +774,7 @@ class UncAccessor(object):
         all_unc_var_names = []
         if "unc_comps" in self._obj[obs_var_name].attrs:
             all_unc_var_names = self._obj[obs_var_name].attrs["unc_comps"]
-            if type(all_unc_var_names) == str:
+            if type(all_unc_var_names) is str:
                 all_unc_var_names = [all_unc_var_names]
 
         # Filter returned names if unc_type defined
@@ -855,11 +855,11 @@ class UncAccessor(object):
         """
 
         # add uncertainty variable
-        if type(unc_def) == xr.DataArray:
+        if type(unc_def) is xr.DataArray:
             self._obj[unc_var] = unc_def
 
         # use templater functionality if var defined with tuple
-        elif type(unc_def) == tuple:
+        elif type(unc_def) is tuple:
             attrs = {}
             if len(unc_def) == 3:
                 attrs = unc_def[2]
@@ -882,7 +882,7 @@ class UncAccessor(object):
 
         # add variable to uncertainty components attribute
         if self._is_obs_var(obs_var):
-            if type(self._obj[obs_var].attrs["unc_comps"]) == str:
+            if type(self._obj[obs_var].attrs["unc_comps"]) is str:
                 self._obj[obs_var].attrs["unc_comps"] = [
                     self._obj[obs_var].attrs["unc_comps"]
                 ]

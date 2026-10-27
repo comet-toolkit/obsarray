@@ -83,7 +83,8 @@ class Flag:
                 )
             else:
                 self._obj[self._flag_var_name].values[self._sli] = (
-                    self._obj[self._flag_var_name][self._sli].values & np.array(~flag_mask)
+                    self._obj[self._flag_var_name][self._sli].values
+                    & np.array(~flag_mask)
                 ).astype(self._obj[self._flag_var_name].values[self._sli].dtype)
 
         # else apply mask
@@ -91,15 +92,16 @@ class Flag:
             if flag_value.dtype is not np.dtype(bool):
                 TypeError("Flag mask must of boolean type")
 
-            i_true = np.where(flag_value == True)
-            i_false = np.where(flag_value == False)
+            i_true = np.where(flag_value == True)  # noqa: E712 (elementwise)
+            i_false = np.where(flag_value == False)  # noqa: E712 (elementwise)
 
             self._obj[self._flag_var_name][self._sli].values[i_true] = np.array(
                 self._obj[self._flag_var_name][self._sli].values[i_true] | flag_mask
             )
 
             self._obj[self._flag_var_name][self._sli].values[i_false] = np.array(
-                self._obj[self._flag_var_name][self._sli].values[i_false] & np.array(~flag_mask)
+                self._obj[self._flag_var_name][self._sli].values[i_false]
+                & np.array(~flag_mask)
             ).astype(self._obj[self._flag_var_name].values[self._sli].dtype)
 
     def _expand_sli(self, sli: Optional[tuple] = None) -> tuple:
@@ -318,7 +320,7 @@ class FlagAccessor(object):
         """
 
         # add uncertainty variable
-        if type(flag_def) == xr.DataArray:
+        if type(flag_def) is xr.DataArray:
             # add necessary flag metadata if missing from provided data array
             flag_meanings, flag_masks = DatasetUtil.unpack_flag_attrs(flag_def.attrs)
             flag_def.attrs.update(DatasetUtil.pack_flag_attrs(flag_meanings))
@@ -326,7 +328,7 @@ class FlagAccessor(object):
             self._obj[flag_var_name] = flag_def
 
         # use templater functionality if var defined with tuple
-        elif type(flag_def) == tuple:
+        elif type(flag_def) is tuple:
             attrs = flag_def[1]
 
             if "flag_meanings" not in attrs:

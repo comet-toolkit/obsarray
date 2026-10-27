@@ -232,22 +232,6 @@ class TestFlagVariable(unittest.TestCase):
         mf.assert_called_with(slice(None, None, None), True)
 
     @patch("obsarray.flag_accessor.Flag.__setitem__")
-    @patch("obsarray.flag_accessor.DatasetUtil.add_flag_meaning_to_attrs")
-    def test___setitem___new_mask(self, mdu, mf):
-
-        original_attrs = deepcopy(self.ds["temperature_flags"].attrs)
-
-        self.ds.flag["temperature_flags"]["test_flag"] = True
-
-        mdu.assert_called_once_with(
-            original_attrs, "test_flag", self.ds["temperature_flags"].dtype
-        )
-
-        self.assertDictEqual(self.ds["temperature_flags"].attrs, {})
-
-        mf.assert_called_with(slice(None, None, None), True)
-
-    @patch("obsarray.flag_accessor.Flag.__setitem__")
     @patch("obsarray.flag_accessor.DatasetUtil.rm_flag_meaning_from_attrs")
     def test___delitem__(self, mdu, mf):
         original_attrs = deepcopy(self.ds["temperature_flags"].attrs)

@@ -569,7 +569,7 @@ class DatasetUtil:
 
         set_flags = DatasetUtil.unpack_flags(da)[flag_name]
 
-        if numpy.any(set_flags == True) and error_if_set:
+        if numpy.any(set_flags == True) and error_if_set:  # noqa: E712
             raise ValueError(
                 "Flag " + flag_name + " already set for variable " + da.name
             )
@@ -597,7 +597,7 @@ class DatasetUtil:
 
         set_flags = DatasetUtil.unpack_flags(da)[flag_name]
 
-        if numpy.any(set_flags == False) and error_if_unset:
+        if numpy.any(set_flags == False) and error_if_unset:  # noqa: E712
             raise ValueError(
                 "Flag " + flag_name + " already set for variable " + da.name
             )
