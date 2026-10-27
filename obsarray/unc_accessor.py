@@ -9,6 +9,7 @@ from obsarray.templater.template_util import create_var
 from obsarray.templater.dataset_util import DatasetUtil
 from obsarray.err_corr import err_corr_forms, BaseErrCorrForm
 from obsarray.utils import empty_err_corr_matrix
+from obsarray.conventions import warn_unc_conventions
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
@@ -852,6 +853,8 @@ class UncAccessor(object):
         :param unc_var: uncertainty variable name
         :param unc_def: either xarray DataArray/Variable, or definition through tuple as ``(dims, data[, attrs])``. ``dims`` is a list of variable dimension names, ``data`` is a numpy array of uncertainty values and ``attrs`` is a dictionary of variable attributes. ``attrs`` should include an element ``pdf_shape`` which defines the uncertainty probability density function form, and ``err_corr`` which defines the error-correlation structure of the data. If omitted ``pdf_shape`` is assumed Gaussian and the error-correlation is assumed random.
         """
+
+        warn_unc_conventions()
 
         # add uncertainty variable
         if type(unc_def) is xr.DataArray:
