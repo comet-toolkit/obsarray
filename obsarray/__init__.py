@@ -11,6 +11,8 @@ from obsarray.templater.template_util import create_ds
 from obsarray.templater.dstemplater import DSTemplater
 from obsarray.templater.dswriter import DSWriter
 from obsarray.utils import append_names
+from obsarray.options import set_options, get_options
+from obsarray.conventions import UNCConventionsWarning
 
 try:
     __version__ = version("obsarray")

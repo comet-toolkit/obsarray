@@ -8,6 +8,7 @@ import xarray
 import numpy
 from numpy.typing import DTypeLike
 from typing import Union, Optional, List, Dict, Tuple
+from obsarray.conventions import warn_unc_conventions
 
 
 __author__ = "Sam Hunt <sam.hunt@npl.co.uk>"
@@ -145,6 +146,8 @@ class DatasetUtil:
             included in ``err_corr``), the error-correlation is assumed random. Variable attributes are
             populated to the effect of this assumption.
         """
+
+        warn_unc_conventions()
 
         # define uncertainty variable attributes, based on FIDUCEO Full FCDR definition (if required)
         attributes = {} if attributes is None else attributes

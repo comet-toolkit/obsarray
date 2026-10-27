@@ -110,7 +110,13 @@ html_theme = "sphinx_book_theme"
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    "announcement": (
+        "<strong>Upcoming change:</strong> obsarray will move to draft v0.2 of the UNC "
+        'specification. <a href="https://obsarray.readthedocs.io/en/latest/content/user/'
+        'unc_conventions.html">Find out what this means for you</a>.'
+    ),
+}
 
 html_logo = "figs/obsarray.png"
 

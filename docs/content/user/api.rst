@@ -94,3 +94,13 @@ Utility functions
    :toctree: generated/
 
    utils.append_names
+
+Options
+=======
+
+.. autosummary::
+   :toctree: generated/
+
+   options.set_options
+   options.get_options
+   conventions.UNCConventionsWarning
