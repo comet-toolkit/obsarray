@@ -1,2 +1,2 @@
-include versioneer.py
-include obsarray/_version.py
+include README.md
+include LICENSE
